@@ -2,9 +2,9 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main ]
+    branches: [ experiment ]
   pull_request:
-    branches: [ main ]
+    branches: [ experiment ]
   # Optional: Allow manual trigger
   workflow_dispatch:
 
