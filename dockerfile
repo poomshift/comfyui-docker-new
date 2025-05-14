@@ -64,5 +64,5 @@ RUN chmod +x /*.sh /download_models.py
 EXPOSE 8188 8888 8189
 
 WORKDIR /
-CMD ["./start.sh"]
+CMD ["python3", "/log_viewer.py"]
 

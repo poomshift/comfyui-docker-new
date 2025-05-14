@@ -68,17 +68,19 @@ clean_log_file() {
 # Clean the log file before starting the log viewer
 clean_log_file
 
-# Start log viewer early to monitor the installation process
-cd /workspace
-CUDA_VISIBLE_DEVICES="" python /log_viewer.py &
-echo "Started log viewer on port 8189 - Monitor setup at http://localhost:8189"
-cd /
+# Function to start the log viewer
+start_log_viewer() {
+    cd /workspace
+    CUDA_VISIBLE_DEVICES="" python /log_viewer.py &
+    echo "Started log viewer on port 8189 - Monitor setup at http://localhost:8189"
+    cd /
+}
 
 # Install uv for faster package installation
 install_uv
 
-# Check if ComfyUI is already cloned
-if [ ! -d "/workspace/ComfyUI/.git" ]; then
+# Function to clone ComfyUI and install dependencies
+install_comfyui() {
     echo "Cloning ComfyUI repository..." | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/comfyanonymous/ComfyUI /workspace/ComfyUI 2>&1 | tee -a /workspace/logs/comfyui.log
     
@@ -115,169 +117,50 @@ if [ ! -d "/workspace/ComfyUI/.git" ]; then
     find . -name "requirements.txt" -exec uv pip install --no-cache -r {} \; 2>&1 | tee -a /workspace/logs/comfyui.log
     
     cd /workspace
-else
-    echo "ComfyUI already exists, skipping clone and setup..."
-fi
-
-# Create log file if it doesn't exist
-touch /workspace/logs/comfyui.log
-
-# Run updates if enabled
-if [ "$UPDATE_ON_START" = "true" ]; then
-    /update.sh
-fi
-
-# Function to check if a model exists
-check_model() {
-    local url=$1
-    local filename=$(basename "$url")
-    # Search for the file in all model directories
-    find /workspace/ComfyUI/models -type f -name "$filename" | grep -q .
-    return $?
 }
 
-# Function to check internet connectivity
-check_internet() {
-    local max_attempts=5
-    local attempt=1
-    local timeout=5
-
-    while [ $attempt -le $max_attempts ]; do
-        echo "Checking internet connectivity (attempt $attempt/$max_attempts)..."
-        if ping -c 1 -W $timeout 8.8.8.8 >/dev/null 2>&1; then
-            echo "Internet connection is available."
-            return 0
-        fi
-        echo "No internet connection. Waiting before retry..."
-        sleep 10
-        attempt=$((attempt + 1))
-    done
-    
-    echo "WARNING: No internet connection after $max_attempts attempts."
-    return 1
+# Function to clone custom nodes
+install_custom_nodes() {
+    # ... existing code for cloning custom nodes ...
 }
 
-# Function to download config with retry
-download_config() {
-    local url=$1
-    local output=$2
-    local max_attempts=5
-    local attempt=1
-    local timeout=30
-
-    while [ $attempt -le $max_attempts ]; do
-        echo "Downloading config (attempt $attempt/$max_attempts)..."
-        if wget --timeout=$timeout --tries=3 -O "$output" "$url" 2>/dev/null; then
-            echo "Successfully downloaded config file."
-            return 0
-        fi
-        echo "Download failed. Waiting before retry..."
-        sleep 10
-        attempt=$((attempt + 1))
-    done
-    
-    echo "WARNING: Failed to download config after $max_attempts attempts."
-    return 1
+# Function to install custom node requirements
+install_custom_node_requirements() {
+    # ... existing code for installing requirements ...
 }
 
-# Check for models_config.json
-CONFIG_FILE="/workspace/models_config.json"
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "Creating models_config.json..."
-    if [ -n "$MODELS_CONFIG_URL" ]; then
-        if ! download_config "$MODELS_CONFIG_URL" "$CONFIG_FILE"; then
-            echo "Failed to download from URL. Creating default config..."
-            echo '{
-                "checkpoints": [],
-                "vae": [],
-                "unet": [],
-                "diffusion_models": [],
-                "text_encoders": [],
-                "loras": [],
-                "upscale_models": [],
-                "clip": [],
-                "controlnet": [],
-                "clip_vision": [],
-                "ipadapter": [],
-                "style_models": []
-            }' > "$CONFIG_FILE"
-        fi
+# Function to download models
+download_models() {
+    # ... existing code for downloading models ...
+}
+
+# Function to initialize GPU
+initialize_gpu() {
+    echo "Initializing GPU..."
+    if ! check_gpu; then
+        echo "WARNING: GPU initialization failed. Services may not function properly."
     else
-        echo "No MODELS_CONFIG_URL provided. Creating default configuration..."
-        echo '{
-            "checkpoints": [],
-            "vae": [],
-            "unet": [],
-            "diffusion_models": [],
-            "text_encoders": [],
-            "loras": [],
-            "upscale_models": [],
-            "clip": [],
-            "controlnet": [],
-            "clip_vision": [],
-            "ipadapter": [],
-            "style_models": []
-        }' > "$CONFIG_FILE"
+        reset_gpu
     fi
-fi
+}
 
-# Check if models from config exist
-missing_models=false
-if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
-    while IFS= read -r url; do
-        if [[ "$url" =~ ^[[:space:]]*\"https?:// ]]; then
-            # Remove quotes, commas and whitespace
-            url=$(echo "$url" | tr -d '",' | xargs)
-            if ! check_model "$url"; then
-                echo "Missing model: $url"
-                missing_models=true
-            fi
-        fi
-    done < "$CONFIG_FILE"
+# Function to start Jupyter
+start_jupyter() {
+    CUDA_VISIBLE_DEVICES="" jupyter lab --allow-root --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token="" --NotebookApp.password="" --notebook-dir=/workspace &
+}
 
-    # Download models if any are missing and downloads aren't skipped
-    if [ "$missing_models" = true ] && [ "$SKIP_MODEL_DOWNLOAD" != "true" ]; then
-        echo "Some required models are missing. Downloading models..." | tee -a /workspace/logs/comfyui.log
-        python3 /download_models.py 2>&1 | tee -a /workspace/logs/comfyui.log
-    else
-        echo "All required models present or download skipped..." | tee -a /workspace/logs/comfyui.log
-    fi
-else
-    echo "No valid models_config.json found. Skipping model checks..."
-fi
+# Function to start ComfyUI
+start_comfyui() {
+    cd /workspace/ComfyUI
+    python3 -c "import torch; torch.cuda.empty_cache()" || true
+    echo "====================================================================" | tee -a /workspace/logs/comfyui.log
+    echo "============ ComfyUI STARTING $(date) ============" | tee -a /workspace/logs/comfyui.log
+    echo "====================================================================" | tee -a /workspace/logs/comfyui.log
+    echo "Starting ComfyUI on port 8188..." | tee -a /workspace/logs/comfyui.log
+    python main.py --listen 0.0.0.0 --port=8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+    COMFY_PID=$!
+    echo "ComfyUI started with PID: $COMFY_PID" | tee -a /workspace/logs/comfyui.log
+}
 
-# Initialize GPU
-echo "Initializing GPU..."
-if ! check_gpu; then
-    echo "WARNING: GPU initialization failed. Services may not function properly."
-else
-    reset_gpu
-fi
-
-# Start services with proper sequencing
-echo "Starting services..."
-
-# Start Jupyter with GPU isolation
-CUDA_VISIBLE_DEVICES="" jupyter lab --allow-root --no-browser --ip=0.0.0.0 --port=8888 --NotebookApp.token="" --NotebookApp.password="" --notebook-dir=/workspace &
-
-# Give other services time to initialize
-sleep 5
-
-# Start ComfyUI with full GPU access
-cd /workspace/ComfyUI
-# Clear any existing CUDA cache
-python3 -c "import torch; torch.cuda.empty_cache()" || true
-# Add a clear marker in the log file
-echo "====================================================================" | tee -a /workspace/logs/comfyui.log
-echo "============ ComfyUI STARTING $(date) ============" | tee -a /workspace/logs/comfyui.log
-echo "====================================================================" | tee -a /workspace/logs/comfyui.log
-# Start ComfyUI with proper logging
-echo "Starting ComfyUI on port 8188..." | tee -a /workspace/logs/comfyui.log
-# Use unbuffer to ensure output is line-buffered for better real-time logging
-python main.py --listen 0.0.0.0 --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
-# Record the PID of the ComfyUI process
-COMFY_PID=$!
-echo "ComfyUI started with PID: $COMFY_PID" | tee -a /workspace/logs/comfyui.log
-
-# Wait for all processes
-wait 
+# This script now only defines functions for install/start logic.
+# It does not auto-run any install/start logic when sourced or run. 

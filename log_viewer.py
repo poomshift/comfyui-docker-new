@@ -10,6 +10,8 @@ import io
 import urllib.parse
 from flask_socketio import SocketIO, emit
 from datetime import datetime
+import shutil
+import signal
 
 # Initialize Flask and SocketIO with CORS
 app = Flask(__name__)
@@ -18,6 +20,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Global variables to store logs
 log_buffer = []
 log_lock = threading.Lock()
+
+comfyui_process = None
 
 # Add HTML_TEMPLATE before the routes
 HTML_TEMPLATE = '''
@@ -67,7 +71,7 @@ HTML_TEMPLATE = '''
         
         .container {
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 400px 1fr;
             grid-template-rows: auto 1fr;
             height: 100vh;
             width: 100%;
@@ -167,6 +171,8 @@ HTML_TEMPLATE = '''
             padding: 6px 0;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-color);
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         
         .list-item:last-child {
@@ -415,12 +421,90 @@ HTML_TEMPLATE = '''
                 grid-column: 1;
             }
         }
+        
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+            
+            .sidebar {
+                grid-row: 2;
+                grid-column: 1;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 12px;
+            }
+            
+            .main-content {
+                grid-row: 3;
+                grid-column: 1;
+            }
+        }
+        .setup-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .setup-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+            padding: 32px 40px;
+            min-width: 340px;
+            max-width: 90vw;
+        }
+        .setup-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: var(--text-color);
+        }
+        .setup-section {
+            margin-bottom: 24px;
+        }
+        .setup-section label {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .setup-list {
+            margin: 10px 0 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .setup-list li {
+            margin-bottom: 6px;
+        }
+        .setup-add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .setup-add-row input {
+            flex: 1;
+        }
+        .setup-progress {
+            margin-top: 18px;
+            min-height: 40px;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        .setup-hidden { display: none; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         let socket;
         let autoScroll = true;
         let userScrolled = false;
+        let setupComplete = false;
+        let installInProgress = false;
+        let installSuccess = false;
+        let installSocket;
 
         function toggleTheme() {
             const html = document.documentElement;
@@ -519,6 +603,8 @@ HTML_TEMPLATE = '''
             
             // Initialize first download tab
             switchDownloadTab('civitai-tab');
+            
+            if (!setupComplete) showSetup();
         });
 
         function isScrolledToBottom(element) {
@@ -620,9 +706,159 @@ HTML_TEMPLATE = '''
                 statusDiv.className = 'status-message status-error';
             });
         }
+
+        function showSetup() {
+            document.getElementById('setup-overlay').classList.remove('setup-hidden');
+            document.getElementById('main-app').classList.add('setup-hidden');
+        }
+        function hideSetup() {
+            document.getElementById('setup-overlay').classList.add('setup-hidden');
+            document.getElementById('main-app').classList.remove('setup-hidden');
+        }
+        function addCustomNode() {
+            const input = document.getElementById('custom-node-input');
+            const url = input.value.trim();
+            if (url) {
+                const list = document.getElementById('custom-nodes-list');
+                const li = document.createElement('li');
+                li.innerHTML = `<label><input type='checkbox' checked value='${url}'> ${url}</label>`;
+                list.appendChild(li);
+                input.value = '';
+            }
+        }
+        function addCustomModel() {
+            const input = document.getElementById('custom-model-input');
+            const url = input.value.trim();
+            if (url) {
+                const list = document.getElementById('models-list');
+                const li = document.createElement('li');
+                li.innerHTML = `<label><input type='checkbox' checked value='${url}'> ${url}</label>`;
+                list.appendChild(li);
+                input.value = '';
+            }
+        }
+        function startInstall() {
+            // Gather checked custom nodes
+            const nodeCheckboxes = document.querySelectorAll('#custom-nodes-list input[type="checkbox"]:checked');
+            const selectedNodes = Array.from(nodeCheckboxes).map(cb => cb.value);
+            // Gather checked models
+            const modelCheckboxes = document.querySelectorAll('#models-list input[type="checkbox"]:checked');
+            const selectedModels = Array.from(modelCheckboxes).map(cb => cb.value);
+            // Hide form, show progress
+            document.getElementById('setup-form').classList.add('setup-hidden');
+            document.getElementById('setup-progress').classList.remove('setup-hidden');
+            document.getElementById('setup-progress').textContent = 'Starting installation...';
+            document.getElementById('start-comfyui-btn').classList.add('setup-hidden');
+            installInProgress = true;
+            installSuccess = false;
+            // POST to backend
+            fetch('/api/install', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ custom_nodes: selectedNodes, models: selectedModels })
+            })
+            .then(resp => resp.json())
+            .then(data => {
+                if (!data.success) {
+                    document.getElementById('setup-progress').textContent = 'Install failed to start: ' + data.message;
+                    installInProgress = false;
+                    return;
+                }
+                // Listen for install_log events
+                if (!installSocket) installSocket = io();
+                document.getElementById('setup-progress').textContent = '';
+                installSocket.off('install_log');
+                installSocket.on('install_log', function(data) {
+                    const div = document.getElementById('setup-progress');
+                    div.textContent += data.msg + '\n';
+                    div.scrollTop = div.scrollHeight;
+                    // Detect completion
+                    if (data.msg && data.msg.toLowerCase().includes('model download complete')) {
+                        installInProgress = false;
+                        installSuccess = true;
+                        document.getElementById('start-comfyui-btn').classList.remove('setup-hidden');
+                    }
+                    if (data.msg && data.msg.toLowerCase().includes('install failed')) {
+                        installInProgress = false;
+                        installSuccess = false;
+                        document.getElementById('start-comfyui-btn').classList.add('setup-hidden');
+                    }
+                });
+            })
+            .catch(err => {
+                document.getElementById('setup-progress').textContent = 'Error: ' + err;
+                installInProgress = false;
+            });
+        }
+        function startComfyUI() {
+            document.getElementById('setup-progress').textContent += '\nStarting ComfyUI...';
+            fetch('/api/start-comfyui', { method: 'POST' })
+                .then(resp => resp.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('setup-progress').textContent += '\nComfyUI started! Redirecting...';
+                        setTimeout(() => {
+                            setupComplete = true;
+                            hideSetup();
+                            // Optionally, redirect to ComfyUI UI
+                            // window.location.href = '{{ proxy_url }}';
+                        }, 1200);
+                    } else {
+                        document.getElementById('setup-progress').textContent += '\nFailed to start: ' + data.message;
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('setup-progress').textContent += '\nError: ' + err;
+                });
+        }
     </script>
 </head>
 <body>
+    <div id="setup-overlay" class="setup-overlay">
+        <div class="setup-card">
+            <div class="setup-title">ComfyUI Setup</div>
+            <form id="setup-form" onsubmit="event.preventDefault(); startInstall();">
+                <div class="setup-section">
+                    <label>Choose Custom Nodes to Install:</label>
+                    <ul id="custom-nodes-list" class="setup-list">
+                        <li><label><input type="checkbox" checked value="https://github.com/ltdrdata/ComfyUI-Manager.git"> ComfyUI-Manager</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git"> ComfyUI-VideoHelperSuite</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/kijai/ComfyUI-KJNodes.git"> ComfyUI-KJNodes</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/city96/ComfyUI-GGUF.git"> ComfyUI-GGUF</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git"> ComfyUI-Inspire-Pack</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git"> ComfyUI-Custom-Scripts</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/rgthree/rgthree-comfy.git"> rgthree-comfy</label></li>
+                        <li><label><input type="checkbox" checked value="https://github.com/cubiq/ComfyUI_essentials.git"> ComfyUI_essentials</label></li>
+                    </ul>
+                    <div class="setup-add-row">
+                        <input id="custom-node-input" type="url" placeholder="Add custom node repo URL">
+                        <button type="button" onclick="addCustomNode()">Add</button>
+                    </div>
+                </div>
+                <div class="setup-section">
+                    <label>Choose Models to Download:</label>
+                    <ul id="models-list" class="setup-list">
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/Patarapoom/model/resolve/main/juggernautXL_juggXIByRundiffusion.safetensors"> juggernautXL_juggXIByRundiffusion</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors"> FLUX.1-schnell VAE</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/Kijai/flux-fp8/resolve/main/flux1-dev-fp8.safetensors"> flux1-dev-fp8 UNet</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/Patarapoom/model/resolve/main/flux1FillDevFp8_v10.safetensors"> flux1FillDevFp8_v10 UNet</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors"> clip_l Text Encoder</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors"> t5xxl_fp8_e4m3fn Text Encoder</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/uwg/upscaler/resolve/main/ESRGAN/8x_NMKD-Superscale_150000_G.pth"> 8x_NMKD-Superscale Upscaler</label></li>
+                        <li><label><input type="checkbox" checked value="https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors"> controlnet-union-sdxl-1.0</label></li>
+                    </ul>
+                    <div class="setup-add-row">
+                        <input id="custom-model-input" type="url" placeholder="Add custom model URL">
+                        <button type="button" onclick="addCustomModel()">Add</button>
+                    </div>
+                </div>
+                <button type="submit" class="button success" style="width:100%;margin-top:10px;">Install Selected</button>
+            </form>
+            <div id="setup-progress" class="setup-progress setup-hidden"></div>
+            <button id="start-comfyui-btn" class="button success setup-hidden" style="width:100%;margin-top:10px;" onclick="startComfyUI()">Start ComfyUI</button>
+        </div>
+    </div>
+    <div id="main-app" class="setup-hidden">
     <div class="container">
         <header class="header">
             <h1 class="header-title">ComfyUI Log Viewer</h1>
@@ -747,6 +983,7 @@ HTML_TEMPLATE = '''
             <input type="checkbox" checked onchange="toggleAutoScroll()">
             <span class="toggle-slider"></span>
         </label>
+    </div>
     </div>
 </body>
 </html>
@@ -1145,6 +1382,113 @@ def index():
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
+
+install_status = {
+    'in_progress': False,
+    'success': None,
+    'error': None
+}
+
+def run_install(selected_nodes, selected_models):
+    global install_status
+    install_status['in_progress'] = True
+    install_status['success'] = None
+    install_status['error'] = None
+    try:
+        # 1. Clone selected custom nodes
+        custom_nodes_dir = '/workspace/ComfyUI/custom_nodes'
+        if os.path.exists(custom_nodes_dir):
+            shutil.rmtree(custom_nodes_dir)
+        os.makedirs(custom_nodes_dir, exist_ok=True)
+        for repo_url in selected_nodes:
+            repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
+            emit_msg = f"Cloning {repo_url}..."
+            socketio.emit('install_log', {'msg': emit_msg})
+            cmd = ['git', 'clone', '--depth=1', repo_url, os.path.join(custom_nodes_dir, repo_name)]
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+            if proc.returncode != 0:
+                socketio.emit('install_log', {'msg': f"Error cloning {repo_url}: {proc.stderr}"})
+                raise Exception(f"Failed to clone {repo_url}")
+            socketio.emit('install_log', {'msg': f"Cloned {repo_url}"})
+        # 2. Write models_config.json
+        config_path = '/workspace/models_config.json'
+        # Guess model category by file extension or let all go to 'checkpoints' if unknown
+        def guess_category(url):
+            # crude guess, can be improved
+            if 'vae' in url.lower(): return 'vae'
+            if 'unet' in url.lower(): return 'unet'
+            if 'loras' in url.lower() or 'lora' in url.lower(): return 'loras'
+            if 'diffusion' in url.lower(): return 'diffusion_models'
+            if 'text_encoder' in url.lower() or 'clip' in url.lower(): return 'text_encoders'
+            if 'upscale' in url.lower(): return 'upscale_models'
+            if 'controlnet' in url.lower(): return 'controlnet'
+            if 'ipadapter' in url.lower(): return 'ipadapter'
+            if 'style' in url.lower(): return 'style_models'
+            return 'checkpoints'
+        model_dict = {k: [] for k in ['checkpoints','vae','unet','diffusion_models','text_encoders','loras','upscale_models','clip','controlnet','clip_vision','ipadapter','style_models']}
+        for url in selected_models:
+            cat = guess_category(url)
+            model_dict.setdefault(cat, []).append(url)
+        with open(config_path, 'w') as f:
+            import json
+            json.dump(model_dict, f, indent=2)
+        socketio.emit('install_log', {'msg': 'models_config.json written'})
+        # 3. Download models using download_models.py
+        socketio.emit('install_log', {'msg': 'Downloading models...'})
+        proc = subprocess.Popen(['python3', '/download_models.py'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        for line in proc.stdout:
+            socketio.emit('install_log', {'msg': line.rstrip()})
+        proc.wait()
+        if proc.returncode != 0:
+            raise Exception('Model download failed')
+        socketio.emit('install_log', {'msg': 'Model download complete.'})
+        install_status['success'] = True
+        install_status['in_progress'] = False
+    except Exception as e:
+        install_status['error'] = str(e)
+        install_status['success'] = False
+        install_status['in_progress'] = False
+        socketio.emit('install_log', {'msg': f'Install failed: {e}'})
+
+@app.route('/api/install', methods=['POST'])
+def api_install():
+    if install_status['in_progress']:
+        return jsonify({'success': False, 'message': 'Install already in progress'}), 400
+    data = request.get_json()
+    custom_nodes = data.get('custom_nodes', [])
+    models = data.get('models', [])
+    thread = threading.Thread(target=run_install, args=(custom_nodes, models), daemon=True)
+    thread.start()
+    return jsonify({'success': True, 'message': 'Install started'})
+
+def run_comfyui():
+    global comfyui_process
+    try:
+        socketio.emit('comfyui_log', {'msg': 'Starting ComfyUI...'})
+        # Clear CUDA cache
+        subprocess.run(['python3', '-c', 'import torch; torch.cuda.empty_cache()'], check=False)
+        # Log start
+        socketio.emit('comfyui_log', {'msg': 'Launching ComfyUI on port 8188...'})
+        comfyui_process = subprocess.Popen(
+            ['python3', 'main.py', '--listen', '0.0.0.0', '--port', '8188'],
+            cwd='/workspace/ComfyUI',
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        )
+        for line in comfyui_process.stdout:
+            socketio.emit('comfyui_log', {'msg': line.rstrip()})
+        comfyui_process.wait()
+        socketio.emit('comfyui_log', {'msg': 'ComfyUI process exited.'})
+    except Exception as e:
+        socketio.emit('comfyui_log', {'msg': f'Failed to start ComfyUI: {e}'})
+
+@app.route('/api/start-comfyui', methods=['POST'])
+def api_start_comfyui():
+    global comfyui_process
+    if comfyui_process and comfyui_process.poll() is None:
+        return jsonify({'success': False, 'message': 'ComfyUI already running'}), 400
+    thread = threading.Thread(target=run_comfyui, daemon=True)
+    thread.start()
+    return jsonify({'success': True, 'message': 'ComfyUI starting'})
 
 if __name__ == '__main__':
     print("Starting log monitoring thread...")
