@@ -84,7 +84,7 @@ clean_log_file
 # Start Log Viewer Early
 # =====================
 cd /workspace
-CUDA_VISIBLE_DEVICES="" python /log_viewer.py &
+CUDA_VISIBLE_DEVICES="" PYTHONPATH=/ python /log_viewer.py &
 echo "Started log viewer on port 8189 - Monitor setup at http://localhost:8189"
 cd /
 
