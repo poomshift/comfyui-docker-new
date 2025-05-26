@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =====================
-# Strict Error Handling
+# Strict Error  Handling
 # =====================
 set -e
 
