@@ -25,7 +25,14 @@ stdout_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(m
 logger.addHandler(stdout_handler)
 
 def download_file(url, output_path):
-    """Download a file using aria2c with optimized settings for faster downloads"""
+    """
+    Download a file using aria2c with optimized settings for faster downloads.
+    Args:
+        url (str): The URL to download from.
+        output_path (Path): The directory to save the file in.
+    Returns:
+        bool: True if download succeeded, False otherwise.
+    """
     filename = url.split('/')[-1]
     logger.info(f"Starting download of {filename} from {url}")
     
@@ -67,7 +74,13 @@ def download_file(url, output_path):
         return False
 
 def get_config(config_path):
-    """Load configuration from file or URL"""
+    """
+    Load configuration from file or URL.
+    Args:
+        config_path (str): Path or URL to the config file.
+    Returns:
+        dict or None: The loaded config, or None on failure.
+    """
     try:
         # Check if it's a URL
         if config_path.startswith(('http://', 'https://')):
@@ -83,7 +96,11 @@ def get_config(config_path):
         return None
 
 def ensure_directories(base_path):
-    """Ensure all required directories exist"""
+    """
+    Ensure all required directories exist under the given base path.
+    Args:
+        base_path (Path): The base directory for model folders.
+    """
     directories = [
         'models/checkpoints',
         'models/vae',
@@ -107,6 +124,10 @@ def ensure_directories(base_path):
         logger.info(f"Ensured directory exists: {full_path}")
 
 def main():
+    """
+    Main entry point for downloading models as specified in the config file.
+    Handles environment variables, directory setup, and download logic.
+    """
     # Environment variables
     config_path = os.getenv('MODELS_CONFIG_URL', '/workspace/models_config.json')
     skip_download = os.getenv('SKIP_MODEL_DOWNLOAD', '').lower() == 'true'

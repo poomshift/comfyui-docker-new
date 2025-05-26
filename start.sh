@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# Set strict error handling
+# =====================
+# Strict Error Handling
+# =====================
 set -e
 
+# =====================
+# GPU Setup Functions
+# =====================
 # Function to check GPU availability with timeout
 check_gpu() {
     local timeout=30
@@ -30,6 +35,9 @@ reset_gpu() {
     sleep 2
 }
 
+# =====================
+# Package Installer Setup
+# =====================
 # Install uv if not already installed
 install_uv() {
     if ! command -v uv &> /dev/null; then
@@ -41,19 +49,24 @@ install_uv() {
     fi
 }
 
-# Ensure CUDA environment is properly set
+# =====================
+# CUDA Environment Variables
+# =====================
 export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
 export CUDA_LAUNCH_BLOCKING=1
 
-# Create necessary directories
+# =====================
+# Directory Setup
+# =====================
 mkdir -p /workspace/logs
 mkdir -p /workspace/ComfyUI
 
-# Create log file if it doesn't exist
 touch /workspace/logs/comfyui.log
 
-# Clean up the log file to remove any duplicate lines
+# =====================
+# Log File Cleanup
+# =====================
 clean_log_file() {
     local log_file="/workspace/logs/comfyui.log"
     if [ -f "$log_file" ] && [ -s "$log_file" ]; then
@@ -65,19 +78,24 @@ clean_log_file() {
     fi
 }
 
-# Clean the log file before starting the log viewer
 clean_log_file
 
-# Start log viewer early to monitor the installation process
+# =====================
+# Start Log Viewer Early
+# =====================
 cd /workspace
 CUDA_VISIBLE_DEVICES="" python /log_viewer.py &
 echo "Started log viewer on port 8189 - Monitor setup at http://localhost:8189"
 cd /
 
-# Install uv for faster package installation
+# =====================
+# Install uv for Faster Package Installation
+# =====================
 install_uv
 
-# Function to check internet connectivity
+# =====================
+# Internet Connectivity Check
+# =====================
 check_internet() {
     local max_attempts=5
     local attempt=1
@@ -98,7 +116,9 @@ check_internet() {
     return 1
 }
 
-# Function to download config with retry
+# =====================
+# Download Config with Retry
+# =====================
 download_config() {
     local url=$1
     local output=$2
@@ -121,7 +141,9 @@ download_config() {
     return 1
 }
 
-# Check for models_config.json and download it first thing
+# =====================
+# Config File Setup
+# =====================
 CONFIG_FILE="/workspace/models_config.json"
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Creating models_config.json..." | tee -a /workspace/logs/comfyui.log
@@ -164,7 +186,9 @@ else
     echo "models_config.json already exists, using existing file" | tee -a /workspace/logs/comfyui.log
 fi
 
-# Create dirs and download ComfyUI if it doesn't exist
+# =====================
+# ComfyUI Setup
+# =====================
 if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "ComfyUI not found or incomplete, installing..." | tee -a /workspace/logs/comfyui.log
     
@@ -234,15 +258,18 @@ else
     mkdir -p /workspace/ComfyUI/output
 fi
 
-# Create log file if it doesn't exist
 touch /workspace/logs/comfyui.log
 
-# Run updates if enabled
+# =====================
+# Run Updates if Enabled
+# =====================
 if [ "$UPDATE_ON_START" = "true" ]; then
     /update.sh
 fi
 
-# Function to check if a model exists
+# =====================
+# Model Existence Check Function
+# =====================
 check_model() {
     local url=$1
     local filename=$(basename "$url")
