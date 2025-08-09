@@ -269,25 +269,15 @@ else
 fi
 
 # Check if models from config exist
-missing_models=false
 if [ -n "$CONFIG_FILE" ] && [ -f "$CONFIG_FILE" ]; then
-    while IFS= read -r url; do
-        if [[ "$url" =~ ^[[:space:]]*\"https?:// ]]; then
-            # Remove quotes, commas and whitespace
-            url=$(echo "$url" | tr -d '",' | xargs)
-            if ! check_model "$url"; then
-                echo "Missing model: $url"
-                missing_models=true
-            fi
-        fi
-    done <"$CONFIG_FILE"
-
-    # Download models if any are missing and downloads aren't skipped
-    if [ "$missing_models" = true ] && [ "$SKIP_MODEL_DOWNLOAD" != "true" ]; then
+    echo "Checking for missing models..." | tee -a /workspace/logs/comfyui.log
+    if python /utils/getInstalledModels.py --check-missing "$CONFIG_FILE"; then
+        echo "All required models present..." | tee -a /workspace/logs/comfyui.log
+    elif [ "$SKIP_MODEL_DOWNLOAD" != "true" ]; then
         echo "Some required models are missing. Downloading models..." | tee -a /workspace/logs/comfyui.log
         python /notebooks/download_models.py 2>&1 | tee -a $LOG_PATH
     else
-        echo "All required models present or download skipped..." | tee -a /workspace/logs/comfyui.log
+        echo "Models missing but download skipped..." | tee -a /workspace/logs/comfyui.log
     fi
 else
     echo "No valid models_config.json found. Skipping model checks..."
