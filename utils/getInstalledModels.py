@@ -1,4 +1,69 @@
 import os
+import sys
+from urllib.parse import urlparse
+
+
+def check_model_exists(url):
+    """Check if a model file exists in ComfyUI models directories"""
+    try:
+        filename = os.path.basename(urlparse(url).path)
+        if not filename:
+            return False
+        
+        # Search in all model directories
+        models_base = "/workspace/ComfyUI/models"
+        if not os.path.exists(models_base):
+            return False
+            
+        for root, dirs, files in os.walk(models_base):
+            if filename in files:
+                return True
+        return False
+    except Exception:
+        return False
+
+
+def check_missing_models(config_file):
+    """Check for missing models from config file and return True if any are missing"""
+    try:
+        if not os.path.exists(config_file):
+            print(f"Config file not found: {config_file}", file=sys.stderr)
+            return True
+            
+        import json
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+        
+        missing_count = 0
+        
+        # Handle different config formats
+        if isinstance(config, dict):
+            # Standard format: {"category": ["url1", "url2"]}
+            for category, urls in config.items():
+                if isinstance(urls, list):
+                    for url in urls:
+                        if isinstance(url, str) and url.startswith('http'):
+                            if not check_model_exists(url):
+                                print(f"Missing model: {url}")
+                                missing_count += 1
+                elif isinstance(urls, str) and urls.startswith('http'):
+                    # Single URL as string
+                    if not check_model_exists(urls):
+                        print(f"Missing model: {urls}")
+                        missing_count += 1
+        elif isinstance(config, list):
+            # Array format: ["url1", "url2"]
+            for url in config:
+                if isinstance(url, str) and url.startswith('http'):
+                    if not check_model_exists(url):
+                        print(f"Missing model: {url}")
+                        missing_count += 1
+        
+        return missing_count > 0
+        
+    except Exception as e:
+        print(f"Error checking models: {e}", file=sys.stderr)
+        return True
 
 
 def get_installed_models():
@@ -59,3 +124,14 @@ def get_installed_models():
 
     # Sort categories alphabetically
     return dict(sorted(models.items()))
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--check-missing":
+        if len(sys.argv) != 3:
+            print("Usage: python getInstalledModels.py --check-missing <config_file>", file=sys.stderr)
+            sys.exit(1)
+        
+        config_file = sys.argv[2]
+        has_missing = check_missing_models(config_file)
+        sys.exit(1 if has_missing else 0)
