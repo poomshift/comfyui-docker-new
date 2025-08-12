@@ -241,13 +241,26 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
 
     cd /workspace
 else
-    echo "ComfyUI already exists, skipping clone and setup..." | tee -a /workspace/logs/comfyui.log
+    echo "ComfyUI already exists, skipping clone" | tee -a /workspace/logs/comfyui.log
     # Create ComfyUI model directories if they don't exist yet
     echo "Ensuring ComfyUI model directories exist..." | tee -a /workspace/logs/comfyui.log
     mkdir -p /workspace/ComfyUI/models/{checkpoints,vae,unet,diffusion_models,text_encoders,loras,upscale_models,clip,controlnet,clip_vision,ipadapter,style_models}
     mkdir -p /workspace/ComfyUI/custom_nodes
     mkdir -p /workspace/ComfyUI/input
     mkdir -p /workspace/ComfyUI/output
+
+    
+    # Install Dependencies
+    cd /workspace/ComfyUI
+    echo "Installing PyTorch dependencies..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
+
+    # Install Custom Nodes Dependencies
+    cd /workspace/ComfyUI/custom_nodes
+    echo "Installing custom node requirements..." | tee -a /workspace/logs/comfyui.log
+    find . -name "requirements.txt" -exec uv pip install --no-cache -r {} \; 2>&1 | tee -a /workspace/logs/comfyui.log
 fi
 
 # Create log file if it doesn't exist
