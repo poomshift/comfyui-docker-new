@@ -3,22 +3,24 @@
     "https://huggingface.co/Patarapoom/model/resolve/main/juggernautXL_juggXIByRundiffusion.safetensors"
   ],
   "vae": [
-    "https://huggingface.co/Patarapoom/model/resolve/main/ae.safetensors"
+    "https://huggingface.co/Patarapoom/model/resolve/main/ae.safetensors",
+    "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors"
   ],
   "unet": [
     "https://huggingface.co/Kijai/flux-fp8/resolve/main/flux1-dev-fp8.safetensors",
-    "https://huggingface.co/Patarapoom/model/resolve/main/flux1FillDevFp8_v10.safetensors"
+    "https://huggingface.co/Patarapoom/model/resolve/main/flux1FillDevFp8_v10.safetensors",
+    "https://huggingface.co/city96/Qwen-Image-gguf/resolve/main/qwen-image-Q5_0.gguf"
   ],
   "diffusion_models": [
     "https://huggingface.co/Comfy-Org/flux1-kontext-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-dev-kontext_fp8_scaled.safetensors"
   ],
   "text_encoders": [
     "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors"
+    "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors",
+    "https://huggingface.co/unsloth/Qwen2.5-VL-7B-Instruct-GGUF/resolve/main/Qwen2.5-VL-7B-Instruct-UD-Q5_K_XL.gguf"
   ],
   "loras": [
     "https://huggingface.co/bytedance-research/UNO/resolve/main/dit_lora.safetensors",
-    "https://huggingface.co/Patarapoom/model/resolve/main/poom-epoch5-flux.safetensors",
     "https://huggingface.co/Patarapoom/model/resolve/main/nongnoey_flux.safetensors",
     "https://huggingface.co/ali-vilab/ACE_Plus/resolve/main/subject/comfyui_subject_lora16.safetensors",
     "https://huggingface.co/ali-vilab/ACE_Plus/resolve/main/portrait/comfyui_portrait_lora64.safetensors"
