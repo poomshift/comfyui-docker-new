@@ -2,9 +2,9 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ main , experiment]
+    branches: [ dev]
   pull_request:
-    branches: [ main , experiment]
+    branches: [ dev]
   # Optional: Allow manual trigger
   workflow_dispatch:
 
@@ -37,7 +37,7 @@ jobs:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            promptalchemist/comfyui-docker-new:exp
+            promptalchemist/comfyui-docker-new:dev
             promptalchemist/comfyui-docker-new:${{ steps.date.outputs.date }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

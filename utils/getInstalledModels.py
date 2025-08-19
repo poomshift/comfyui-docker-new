@@ -71,21 +71,37 @@ def get_installed_models():
     models = {}
 
     try:
-        # Check multiple possible locations for models_config.json
-        config_paths = [
-            "/workspace/models_config.json",
-            "./models_config.json",
-            os.path.join(os.path.dirname(__file__), "models_config.json"),
-        ]
-
+        import json
+        import urllib.request
+        
         model_config = None
-        for path in config_paths:
-            if os.path.exists(path):
-                import json
+        
+        # Check if MODELS_CONFIG_URL is set and try to fetch from URL first
+        models_config_url = os.getenv("MODELS_CONFIG_URL")
+        if models_config_url and models_config_url.startswith("http"):
+            try:
+                print(f"Fetching model config from URL: {models_config_url}")
+                with urllib.request.urlopen(models_config_url) as response:
+                    model_config = json.loads(response.read().decode())
+                print("Successfully loaded model config from custom URL")
+            except Exception as e:
+                print(f"Failed to fetch model config from URL {models_config_url}: {e}")
+                print("Falling back to local config files...")
+        
+        # If URL fetch failed or no URL provided, check local files
+        if not model_config:
+            config_paths = [
+                "/workspace/models_config.json",
+                "./models_config.json",
+                os.path.join(os.path.dirname(__file__), "models_config.json"),
+            ]
 
-                with open(path, "r") as file:
-                    model_config = json.load(file)
-                break
+            for path in config_paths:
+                if os.path.exists(path):
+                    with open(path, "r") as file:
+                        model_config = json.load(file)
+                    print(f"Loaded model config from local file: {path}")
+                    break
 
         if not model_config:
             print("Warning: models_config.json not found in expected locations")
