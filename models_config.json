@@ -7,12 +7,13 @@
     "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors"
   ],
   "unet": [
-    "https://huggingface.co/Patarapoom/model/resolve/main/flux1-krea-dev-fp8.safetensors",
     "https://huggingface.co/Patarapoom/model/resolve/main/flux1FillDevFp8_v10.safetensors",
-    "https://huggingface.co/city96/Qwen-Image-gguf/resolve/main/qwen-image-Q5_0.gguf"
+    "https://huggingface.co/city96/Qwen-Image-gguf/resolve/main/qwen-image-Q5_0.gguf",
+    "https://huggingface.co/QuantStack/Qwen-Image-Edit-GGUF/resolve/main/Qwen_Image_Edit-Q5_0.gguf"
   ],
   "diffusion_models": [
-    "https://huggingface.co/Comfy-Org/flux1-kontext-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-dev-kontext_fp8_scaled.safetensors"
+    "https://huggingface.co/Comfy-Org/flux1-kontext-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-dev-kontext_fp8_scaled.safetensors",
+    "https://huggingface.co/Comfy-Org/FLUX.1-Krea-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-krea-dev_fp8_scaled.safetensors"
   ],
   "text_encoders": [
     "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
@@ -35,8 +36,7 @@
     "https://huggingface.co/Patarapoom/model/resolve/main/Shakker-Labs_FLUX.1-dev-ControlNet-Union-Pro-2-0.safetensors"
   ],
   "clip_vision": [
-    "https://huggingface.co/Patarapoom/model/resolve/main/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors",
-    "https://huggingface.co/Comfy-Org/sigclip_vision_384/resolve/main/sigclip_vision_patch14_384.safetensors"
+    "https://huggingface.co/Patarapoom/model/resolve/main/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
   ],
   "ipadapter": [
     "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl_vit-h.safetensors",
@@ -44,7 +44,6 @@
     "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter_sdxl.safetensors"
   ],
   "style_models": [
-    "https://huggingface.co/Patarapoom/model/resolve/main/flux1-redux-dev.safetensors"
   ],
   "clip": []
 } 
