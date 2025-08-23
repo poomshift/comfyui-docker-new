@@ -26,7 +26,8 @@
     "https://huggingface.co/ali-vilab/ACE_Plus/resolve/main/portrait/comfyui_portrait_lora64.safetensors",
     "https://huggingface.co/lightx2v/Qwen-Image-Lightning/resolve/main/Qwen-Image-Lightning-4steps-V1.0.safetensors",
     "https://huggingface.co/Patarapoom/model/resolve/main/poom-epoch5-flux.safetensors",
-    "https://huggingface.co/Patarapoom/model/resolve/main/UltraRealPhoto_flux.safetensors"
+    "https://huggingface.co/Patarapoom/model/resolve/main/UltraRealPhoto_flux.safetensors",
+    "https://huggingface.co/Comfy-Org/Qwen-Image-DiffSynth-ControlNets/resolve/main/split_files/loras/qwen_image_union_diffsynth_lora.safetensors"
   ],
   "upscale_models": [
     "https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth"
