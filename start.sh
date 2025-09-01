@@ -198,6 +198,17 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
+    # Install SageAttention 2.2.0 from source
+    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
+    if [ ! -d "/tmp/SageAttention" ]; then
+        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    fi
+    cd /tmp/SageAttention
+    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+    python setup.py install 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+    cd /workspace/ComfyUI
+
     # Create model directories
     mkdir -p /workspace/ComfyUI/models/{checkpoints,vae,unet,diffusion_models,text_encoders,loras,upscale_models,clip,controlnet,clip_vision,ipadapter,style_models}
     mkdir -p /workspace/ComfyUI/custom_nodes
@@ -255,6 +266,17 @@ else
     uv pip install --no-cache torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
+
+    # Install SageAttention 2.2.0 from source
+    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
+    if [ ! -d "/tmp/SageAttention" ]; then
+        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    fi
+    cd /tmp/SageAttention
+    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+    python setup.py install 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+    cd /workspace/ComfyUI
 
     # Install Custom Nodes Dependencies
     cd /workspace/ComfyUI/custom_nodes

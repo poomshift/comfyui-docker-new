@@ -69,13 +69,6 @@ RUN jupyter notebook --generate-config && \
     echo "c.NotebookApp.allow_origin = '*'" >> /root/.jupyter/jupyter_notebook_config.py && \
     echo "c.NotebookApp.allow_remote_access = True" >> /root/.jupyter/jupyter_notebook_config.py
 
-# Install SageAttention 2.2.0 from source
-RUN git clone https://github.com/thu-ml/SageAttention.git && \
-    cd SageAttention && \
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32 && \
-    python setup.py install && \
-    cd / && rm -rf SageAttention
-
 # clear cache to free up space 
 RUN uv cache clean 
 RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
