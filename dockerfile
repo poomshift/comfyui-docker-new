@@ -22,8 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rsync \
     curl \
     ca-certificates \
-    nvidia-cuda-dev \
-    nvidia-cuda-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository ppa:deadsnakes/ppa && \
