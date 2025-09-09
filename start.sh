@@ -205,7 +205,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     fi
     cd /tmp/SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
@@ -276,7 +276,7 @@ else
     fi
     cd /tmp/SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
@@ -342,7 +342,7 @@ if ! python -c "import sageattention" 2>/dev/null; then
     fi
     cd /tmp/SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
 else
