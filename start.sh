@@ -198,14 +198,9 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 2.2.0 from source
-    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
-    if [ ! -d "/tmp/SageAttention" ]; then
-        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
-    fi
-    cd /tmp/SageAttention
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    python setup.py install 2>&1 | tee -a /workspace/logs/comfyui.log
+    # Install SageAttention package
+    echo "Installing SageAttention..." | tee -a /workspace/logs/comfyui.log
+    uv pip install sageattention 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
@@ -269,14 +264,9 @@ else
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 2.2.0 from source
-    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
-    if [ ! -d "/tmp/SageAttention" ]; then
-        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
-    fi
-    cd /tmp/SageAttention
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    python setup.py install 2>&1 | tee -a /workspace/logs/comfyui.log
+    # Install SageAttention package
+    echo "Installing SageAttention..." | tee -a /workspace/logs/comfyui.log
+    uv pip install sageattention 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
