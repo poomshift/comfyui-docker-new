@@ -205,7 +205,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     fi
     cd /tmp/SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
@@ -276,7 +276,7 @@ else
     fi
     cd /tmp/SageAttention
     export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
@@ -332,6 +332,23 @@ sleep 5
 
 # Start ComfyUI with full GPU access
 cd /workspace/ComfyUI
+
+# Ensure SageAttention is installed before starting ComfyUI
+echo "Checking SageAttention installation..." | tee -a /workspace/logs/comfyui.log
+if ! python -c "import sageattention" 2>/dev/null; then
+    echo "SageAttention not found, installing..." | tee -a /workspace/logs/comfyui.log
+    if [ ! -d "/tmp/SageAttention" ]; then
+        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    fi
+    cd /tmp/SageAttention
+    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+    uv pip install -e . 2>&1 | tee -a /workspace/logs/comfyui.log
+    cd /workspace/ComfyUI
+    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+else
+    echo "SageAttention already installed" | tee -a /workspace/logs/comfyui.log
+fi
+
 # Clear any existing CUDA cache
 python -c "import torch; torch.cuda.empty_cache()" || true
 # Add a clear marker in the log file
