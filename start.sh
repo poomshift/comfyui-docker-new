@@ -198,15 +198,20 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 2.2.0 from source
-    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
-    if [ ! -d "/tmp/SageAttention" ]; then
-        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    # Check if NVCC is available before installing SageAttention
+    if command -v nvcc >/dev/null 2>&1; then
+        # Install SageAttention 2.2.0 from source
+        echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
+        if [ ! -d "/tmp/SageAttention" ]; then
+            git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+        fi
+        cd /tmp/SageAttention
+        export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+        uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
+        echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+    else
+        echo "NVCC not found, skipping SageAttention installation (CUDA development tools required)" | tee -a /workspace/logs/comfyui.log
     fi
-    cd /tmp/SageAttention
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
     # Create model directories
@@ -269,15 +274,20 @@ else
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 2.2.0 from source
-    echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
-    if [ ! -d "/tmp/SageAttention" ]; then
-        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    # Check if NVCC is available before installing SageAttention
+    if command -v nvcc >/dev/null 2>&1; then
+        # Install SageAttention 2.2.0 from source
+        echo "Installing SageAttention 2.2.0..." | tee -a /workspace/logs/comfyui.log
+        if [ ! -d "/tmp/SageAttention" ]; then
+            git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+        fi
+        cd /tmp/SageAttention
+        export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+        uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
+        echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+    else
+        echo "NVCC not found, skipping SageAttention installation (CUDA development tools required)" | tee -a /workspace/logs/comfyui.log
     fi
-    cd /tmp/SageAttention
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
     cd /workspace/ComfyUI
 
     # Install Custom Nodes Dependencies
@@ -333,18 +343,23 @@ sleep 5
 # Start ComfyUI with full GPU access
 cd /workspace/ComfyUI
 
-# Ensure SageAttention is installed before starting ComfyUI
+# Check SageAttention availability before starting ComfyUI
 echo "Checking SageAttention installation..." | tee -a /workspace/logs/comfyui.log
 if ! python -c "import sageattention" 2>/dev/null; then
-    echo "SageAttention not found, installing..." | tee -a /workspace/logs/comfyui.log
-    if [ ! -d "/tmp/SageAttention" ]; then
-        git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+    if command -v nvcc >/dev/null 2>&1; then
+        echo "SageAttention not found, installing..." | tee -a /workspace/logs/comfyui.log
+        if [ ! -d "/tmp/SageAttention" ]; then
+            git clone https://github.com/thu-ml/SageAttention.git /tmp/SageAttention 2>&1 | tee -a /workspace/logs/comfyui.log
+        fi
+        cd /tmp/SageAttention
+        export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
+        uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
+        cd /workspace/ComfyUI
+        echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
+    else
+        echo "NVCC not found, cannot install SageAttention. Starting ComfyUI without --use-sage-attention flag" | tee -a /workspace/logs/comfyui.log
+        SAGE_ATTENTION_DISABLED=true
     fi
-    cd /tmp/SageAttention
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-    uv pip install -e . --no-build-isolation 2>&1 | tee -a /workspace/logs/comfyui.log
-    cd /workspace/ComfyUI
-    echo "SageAttention installation complete" | tee -a /workspace/logs/comfyui.log
 else
     echo "SageAttention already installed" | tee -a /workspace/logs/comfyui.log
 fi
@@ -358,7 +373,11 @@ echo "====================================================================" | te
 # Start ComfyUI with proper logging
 echo "Starting ComfyUI on port 8188..." | tee -a /workspace/logs/comfyui.log
 # Use unbuffer to ensure output is line-buffered for better real-time logging
-python main.py --listen 0.0.0.0 --use-sage-attention --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+if [ "$SAGE_ATTENTION_DISABLED" = "true" ]; then
+    python main.py --listen 0.0.0.0 --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+else
+    python main.py --listen 0.0.0.0 --use-sage-attention --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+fi
 # Record the PID of the ComfyUI process
 COMFY_PID=$!
 echo "ComfyUI started with PID: $COMFY_PID" | tee -a /workspace/logs/comfyui.log
