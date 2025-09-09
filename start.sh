@@ -198,12 +198,10 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention2 from prebuilt wheel (no compilation needed)
-    cd /workspace
-    echo "Installing SageAttention2 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    wget https://huggingface.co/nitin19/flash-attention-wheels/resolve/main/sageattention-2.1.1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    uv pip install ./sageattention-2.1.1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention2 installation complete" | tee -a /workspace/logs/comfyui.log
+    # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
     cd /workspace/ComfyUI
 
@@ -267,12 +265,10 @@ else
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention2 from prebuilt wheel (no compilation needed)
-    cd /workspace
-    echo "Installing SageAttention2 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    wget https://huggingface.co/nitin19/flash-attention-wheels/resolve/main/sageattention-2.1.1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    uv pip install ./sageattention-2.1.1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention2 installation complete" | tee -a /workspace/logs/comfyui.log
+    # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
     cd /workspace/ComfyUI
 
