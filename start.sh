@@ -7,6 +7,7 @@ export MODELS_CONFIG_URL=${MODELS_CONFIG_URL:-"https://raw.githubusercontent.com
 export SKIP_MODEL_DOWNLOAD=${SKIP_MODEL_DOWNLOAD:-"false"}
 export FORCE_MODEL_DOWNLOAD=${FORCE_MODEL_DOWNLOAD:-"false"}
 export LOG_PATH=${LOG_PATH:-"/notebooks/backend.log"}
+export USE_SAGE_ATTENTION=${USE_SAGE_ATTENTION:-"false"}
 
 export TORCH_FORCE_WEIGHTS_ONLY_LOAD=1
 
@@ -198,6 +199,13 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
+    # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    cd /workspace/ComfyUI
+
     # Create model directories
     mkdir -p /workspace/ComfyUI/models/{checkpoints,vae,unet,diffusion_models,text_encoders,loras,upscale_models,clip,controlnet,clip_vision,ipadapter,style_models}
     mkdir -p /workspace/ComfyUI/custom_nodes
@@ -211,7 +219,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Cloning custom nodes..." | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Manager.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Manager | tee -a /workspace/logs/comfyui.log
     #git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Impact-Pack | tee -a /workspace/logs/comfyui.log
-    #git clone --depth=1 https://github.com/cubiq/ComfyUI_essentials.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_essentials | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/cubiq/ComfyUI_essentials.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_essentials | tee -a /workspace/logs/comfyui.log
     #git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Inspire-Pack | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/Fannovel16/comfyui_controlnet_aux.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh comfyui_controlnet_aux | tee -a /workspace/logs/comfyui.log
     #git clone --depth=1 https://github.com/nicofdga/DZ-FaceDetailer.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh DZ-FaceDetailer | tee -a /workspace/logs/comfyui.log
@@ -228,6 +236,9 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Frame-Interpolation | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-SeedVR2_VideoUpscaler | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/ShmuelRonen/ComfyUI-VideoUpscale_WithModel.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-VideoUpscale_WithModel | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-WanVideoWrapper | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/chflame163/ComfyUI_LayerStyle.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_LayerStyle | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-MelBandRoFormer | tee -a /workspace/logs/comfyui.log
     
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log
 
@@ -255,6 +266,13 @@ else
     uv pip install --no-cache torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
+
+    # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    cd /workspace/ComfyUI
 
     # Install Custom Nodes Dependencies
     cd /workspace/ComfyUI/custom_nodes
@@ -308,6 +326,8 @@ sleep 5
 
 # Start ComfyUI with full GPU access
 cd /workspace/ComfyUI
+
+
 # Clear any existing CUDA cache
 python -c "import torch; torch.cuda.empty_cache()" || true
 # Add a clear marker in the log file
@@ -317,7 +337,11 @@ echo "====================================================================" | te
 # Start ComfyUI with proper logging
 echo "Starting ComfyUI on port 8188..." | tee -a /workspace/logs/comfyui.log
 # Use unbuffer to ensure output is line-buffered for better real-time logging
-python main.py --listen 0.0.0.0 --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+if [ "$USE_SAGE_ATTENTION" = "true" ]; then
+    python main.py --listen 0.0.0.0 --use-sage-attention --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+else
+    python main.py --listen 0.0.0.0 --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+fi
 # Record the PID of the ComfyUI process
 COMFY_PID=$!
 echo "ComfyUI started with PID: $COMFY_PID" | tee -a /workspace/logs/comfyui.log

@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.8.0-base-ubuntu22.04 AS builder
+FROM nvidia/cuda:12.8.0-base-ubuntu24.04 AS builder
 
 ARG PYTHON_VERSION="3.12"
 ARG CONTAINER_TIMEZONE=UTC 
@@ -9,7 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     PATH="${PATH}:/root/.local/bin:/root/.cargo/bin"
 
-# Install system dependencies 
+# Install system dependencies including CUDA development tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     git \
