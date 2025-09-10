@@ -7,6 +7,7 @@ export MODELS_CONFIG_URL=${MODELS_CONFIG_URL:-"https://raw.githubusercontent.com
 export SKIP_MODEL_DOWNLOAD=${SKIP_MODEL_DOWNLOAD:-"false"}
 export FORCE_MODEL_DOWNLOAD=${FORCE_MODEL_DOWNLOAD:-"false"}
 export LOG_PATH=${LOG_PATH:-"/notebooks/backend.log"}
+export USE_SAGE_ATTENTION=${USE_SAGE_ATTENTION:-"false"}
 
 export TORCH_FORCE_WEIGHTS_ONLY_LOAD=1
 
@@ -336,7 +337,11 @@ echo "====================================================================" | te
 # Start ComfyUI with proper logging
 echo "Starting ComfyUI on port 8188..." | tee -a /workspace/logs/comfyui.log
 # Use unbuffer to ensure output is line-buffered for better real-time logging
-python main.py --listen 0.0.0.0 --use-sage-attention --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+if [ "$USE_SAGE_ATTENTION" = "true" ]; then
+    python main.py --listen 0.0.0.0 --use-sage-attention --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+else
+    python main.py --listen 0.0.0.0 --port 8188 2>&1 | tee -a /workspace/logs/comfyui.log &
+fi
 # Record the PID of the ComfyUI process
 COMFY_PID=$!
 echo "ComfyUI started with PID: $COMFY_PID" | tee -a /workspace/logs/comfyui.log
