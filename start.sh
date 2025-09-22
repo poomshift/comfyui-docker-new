@@ -204,9 +204,6 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
-    #install Triton
-    uv pip install triton
-
     cd /workspace/ComfyUI
 
     # Create model directories
