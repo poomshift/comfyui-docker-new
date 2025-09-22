@@ -204,6 +204,9 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
+    #install Triton
+    uv pip install triton
+
     cd /workspace/ComfyUI
 
     # Create model directories
@@ -235,11 +238,12 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Custom-Scripts | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Frame-Interpolation | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-SeedVR2_VideoUpscaler | tee -a /workspace/logs/comfyui.log
-    git clone --depth=1 https://github.com/ShmuelRonen/ComfyUI-VideoUpscale_WithModel.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-VideoUpscale_WithModel | tee -a /workspace/logs/comfyui.log
+    #git clone --depth=1 https://github.com/ShmuelRonen/ComfyUI-VideoUpscale_WithModel.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-VideoUpscale_WithModel | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-WanVideoWrapper | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/chflame163/ComfyUI_LayerStyle.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_LayerStyle | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-MelBandRoFormer | tee -a /workspace/logs/comfyui.log
-    
+    git clone --depth=1 https://github.com/kijai/ComfyUI-segment-anything-2.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-segment-anything-2 | tee -a /workspace/logs/comfyui.log
+
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log
 
     # Install custom nodes requirements
