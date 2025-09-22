@@ -58,6 +58,8 @@ RUN uv pip install --no-cache \
     pip \
     "numpy<2"
 
+RUN uv pip install --no-cache triton
+
 # Setup Jupyter configuration
 RUN jupyter notebook --generate-config && \
     echo "c.NotebookApp.allow_root = True" >> /root/.jupyter/jupyter_notebook_config.py && \
