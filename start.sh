@@ -204,6 +204,11 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
+    # Install SageAttention 3 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
+    
     cd /workspace/ComfyUI
 
     # Create model directories
@@ -273,6 +278,11 @@ else
     echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
     uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    # Install SageAttention 3 from prebuilt wheel (no compilation needed)
+    echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
 
     cd /workspace/ComfyUI
 
