@@ -25,5 +25,10 @@
   ],
   "style_models": [
   ],
-  "clip": []
+  "clip": [
+    
+  ],
+  "model_patches": [
+    "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union/resolve/main/Z-Image-Turbo-Fun-Controlnet-Union.safetensors"
+  ]
 } 
