@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.8.0-base-ubuntu24.04 AS builder
+FROM nvidia/cuda:12.8.0-devel-ubuntu24.04 AS builder
 
 ARG PYTHON_VERSION="3.12"
 ARG CONTAINER_TIMEZONE=UTC 
