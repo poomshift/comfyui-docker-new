@@ -208,6 +208,16 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
     uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    # Install Triton 3.3.0 from prebuilt wheel (replaces bundled 3.5.1 which has JIT issues)
+    echo "Installing Triton 3.3.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --force-reinstall https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/triton-3.3.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "Triton 3.3.0 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    # Install Flash Attention from prebuilt wheel
+    echo "Installing Flash Attention 2.7.4 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-deps https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/flash_attn-2.7.4.post1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "Flash Attention 2.7.4 installation complete" | tee -a /workspace/logs/comfyui.log
     
     cd /workspace/ComfyUI
 
@@ -284,6 +294,16 @@ else
     echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
     uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    # Install Triton 3.3.0 from prebuilt wheel (replaces bundled 3.5.1 which has JIT issues)
+    echo "Installing Triton 3.3.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --force-reinstall https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/triton-3.3.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "Triton 3.3.0 installation complete" | tee -a /workspace/logs/comfyui.log
+
+    # Install Flash Attention from prebuilt wheel
+    echo "Installing Flash Attention 2.7.4 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-deps https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/flash_attn-2.7.4.post1-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    echo "Flash Attention 2.7.4 installation complete" | tee -a /workspace/logs/comfyui.log
 
     cd /workspace/ComfyUI
 
