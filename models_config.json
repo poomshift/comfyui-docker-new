@@ -21,7 +21,6 @@
     "https://huggingface.co/ali-vilab/ACE_Plus/resolve/main/portrait/comfyui_portrait_lora64.safetensors"
   ],
   "upscale_models": [
-    "https://huggingface.co/lokCX/4x-Ultrasharp/resolve/main/4x-UltraSharp.pth"
   ],
   "controlnet": [
     "https://huggingface.co/Patarapoom/model/resolve/main/controlnet-union-sdxl_promax.safetensors",
