@@ -246,6 +246,9 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/kijai/ComfyUI-MelBandRoFormer.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-MelBandRoFormer | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/kijai/ComfyUI-segment-anything-2.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-segment-anything-2 | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/kijai/ComfyUI-WanAnimatePreprocess.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-WanAnimatePreprocess | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/theUpsider/ComfyUI-Logic.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Logic | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/ltdrdata/was-node-suite-comfyui.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh was-node-suite-comfyui | tee -a /workspace/logs/comfyui.log
+
     
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log
 
