@@ -195,7 +195,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     # Install dependencies
     cd /workspace/ComfyUI
     echo "Installing PyTorch dependencies..." | tee -a /workspace/logs/comfyui.log
-    uv pip install --no-cache torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
@@ -273,7 +273,7 @@ else
     # Install Dependencies
     cd /workspace/ComfyUI
     echo "Installing PyTorch dependencies..." | tee -a /workspace/logs/comfyui.log
-    uv pip install --no-cache torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
