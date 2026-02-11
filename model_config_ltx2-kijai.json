@@ -1,7 +1,5 @@
 {
   "checkpoints": [
-    "https://huggingface.co/Kijai/LTXV2_comfy/resolve/main/diffusion_models/ltx-2-19b-dev-fp8_transformer_only.safetensors",
-    "https://huggingface.co/Kijai/LTXV2_comfy/resolve/main/diffusion_models/ltx-2-19b-dev_transformer_only_bf16.safetensors"
   ],
   "vae": [
     "https://huggingface.co/Kijai/LTXV2_comfy/resolve/main/VAE/taeltx_2.safetensors",
@@ -11,7 +9,8 @@
   "unet": [],
   "diffusion_models": [
     "https://huggingface.co/Comfy-Org/lotus/resolve/main/lotus-depth-d-v1-1.safetensors",
-    "https://huggingface.co/Kijai/MelBandRoFormer_comfy/resolve/main/MelBandRoformer_fp32.safetensors"
+    "https://huggingface.co/Kijai/MelBandRoFormer_comfy/resolve/main/MelBandRoformer_fp32.safetensors",
+    "https://huggingface.co/Phr00t/LTX2-Rapid-Merges/resolve/main/sfw/ltx2-phr00tmerge-sfw-v5.safetensors"
   ],
   "text_encoders": [
     "https://huggingface.co/Kijai/LTXV2_comfy/resolve/main/text_encoders/ltx-2-19b-embeddings_connector_dev_bf16.safetensors",
