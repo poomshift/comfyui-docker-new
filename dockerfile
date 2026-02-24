@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     PATH="/opt/venv/bin:/root/.local/bin:/root/.cargo/bin:${PATH}"
 
-# System deps + Python + uv + venv in one layer
+# Everything in one layer to minimize overlay mounts
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     git \
@@ -31,10 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-# All pip installs + Jupyter config in one layer
-RUN uv pip install --no-cache \
+    && rm -rf /var/lib/apt/lists/* \
+    && uv pip install --no-cache \
     jupyter \
     jupyterlab \
     nodejs \
@@ -58,10 +56,8 @@ RUN uv pip install --no-cache \
     && echo "c.NotebookApp.allow_origin = '*'" >> /root/.jupyter/jupyter_notebook_config.py \
     && echo "c.NotebookApp.allow_remote_access = True" >> /root/.jupyter/jupyter_notebook_config.py
 
-# Create directories and copy files
 WORKDIR /notebooks
 RUN mkdir -p /workspace /notebooks/dto /notebooks/static /notebooks/utils /notebooks/workers
-
 COPY start.sh log_viewer.py download_models.py ./
 COPY ./constants/ ./constants/
 COPY ./dto/ ./dto/
@@ -70,7 +66,6 @@ COPY ./workers/ ./workers/
 COPY ./utils/ ./utils/
 COPY ./templates/ ./templates/
 COPY models_config.json /workspace
-
 RUN chmod +x *.sh
 
 EXPOSE 8188 8888 8189
