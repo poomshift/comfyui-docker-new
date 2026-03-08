@@ -1,0 +1,28 @@
+{
+  "checkpoints": [
+    "https://huggingface.co/Lightricks/LTX-2.3-fp8/resolve/main/ltx-2.3-22b-dev-fp8.safetensors"
+  ],
+  "vae": [
+  ],
+  "unet": [],
+  "diffusion_models": [
+    "https://huggingface.co/Comfy-Org/lotus/resolve/main/lotus-depth-d-v1-1.safetensors",
+    "https://huggingface.co/Kijai/MelBandRoFormer_comfy/resolve/main/MelBandRoformer_fp32.safetensors"
+  ],
+  "text_encoders": [
+    "https://huggingface.co/GitMylo/LTX-2-comfy_gemma_fp8_e4m3fn/resolve/main/gemma_3_12B_it_fp8_e4m3fn.safetensors"
+  ],
+  "loras": [
+    "https://huggingface.co/Lightricks/LTX-2.3/resolve/main/ltx-2.3-22b-distilled-lora-384.safetensors"
+  ],
+  "latent_upscale_models": [
+    "https://huggingface.co/Lightricks/LTX-2.3/resolve/main/ltx-2.3-spatial-upscaler-x2-1.0.safetensors"
+  ],
+  "controlnet": [],
+  "clip_vision": [],
+  "ipadapter": [],
+  "style_models": [],
+  "audio_encoders": [],
+  "clip": [],
+  "detection": []
+}
