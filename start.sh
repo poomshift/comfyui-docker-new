@@ -199,6 +199,9 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
+    echo "Pinning transformers to 5.3.0..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache transformers==5.3.0 2>&1 | tee -a /workspace/logs/comfyui.log
+
     # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
     echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
     uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
@@ -280,6 +283,9 @@ else
     uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
+
+    echo "Ensuring transformers is pinned to 5.3.0..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache transformers==5.3.0 2>&1 | tee -a /workspace/logs/comfyui.log
 
     # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
     echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
