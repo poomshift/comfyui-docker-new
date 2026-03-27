@@ -66,6 +66,8 @@ COPY ./workers/ ./workers/
 COPY ./utils/ ./utils/
 COPY ./templates/ ./templates/
 COPY models_config.json /workspace
+
+RUN uv pip install --no-cache "transformers==4.51.3" && uv cache clean
 RUN chmod +x *.sh
 
 EXPOSE 8188 8888 8189
