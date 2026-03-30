@@ -200,10 +200,11 @@ async def index(request: Request):
         proxy_url = f"http://{proxy_host}:{proxy_port}"
         jupyter_url = f"http://{proxy_host}:{jupyter_port}"
 
-    # return template instead of html string
-    return templates.TemplateResponse(
-        "web.html",
-        {
+        # return template instead of html string
+        return templates.TemplateResponse(
+        request=request,
+        name="web.html",
+        context={
             "request": request,
             "logs": logs,
             "proxy_url": proxy_url,
