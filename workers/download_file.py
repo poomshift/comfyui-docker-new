@@ -20,7 +20,7 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
     model_dir = os.path.join("/workspace", "ComfyUI", model_path)
     os.makedirs(model_dir, exist_ok=True)
 
-  cmd = [
+  cmd = [    
         "aria2c",
         "--console-log-level=error",
         "-c",
