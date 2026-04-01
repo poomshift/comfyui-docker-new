@@ -20,34 +20,25 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
     model_dir = os.path.join("/workspace", "ComfyUI", model_path)
     os.makedirs(model_dir, exist_ok=True)
 
-    cmd = [
+  cmd = [
         "aria2c",
         "--console-log-level=error",
         "-c",
         "-x",
-        "16",
+        "1",
         "-s",
-        "16",
-        "-k",
-        "1M",
+        "1",
         "--file-allocation=none",
-        "--optimize-concurrent-downloads=true",
-        "--max-connection-per-server=16",
-        "--min-split-size=1M",
         "--max-tries=5",
         "--retry-wait=10",
         "--connect-timeout=30",
         "--timeout=600",
         "--auto-file-renaming=false",
+        "--allow-overwrite=true",
     ]
 
     if api_key:
         cmd.extend(["--header", f"Authorization: Bearer {api_key}"])
-        # Also append token as query param as fallback for redirects
-        if "?" in url:
-            url = f"{url}&token={api_key}"
-        else:
-            url = f"{url}?token={api_key}"
 
     cmd.extend([url, "-d", model_dir])
 
