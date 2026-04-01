@@ -201,7 +201,7 @@ async def index(request: Request):
         jupyter_url = f"http://{proxy_host}:{jupyter_port}"
 
         # return template instead of html string
-        return templates.TemplateResponse(
+    return templates.TemplateResponse(
         request=request,
         name="web.html",
         context={
