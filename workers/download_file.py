@@ -20,10 +20,6 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
     model_dir = os.path.join("/workspace", "ComfyUI", model_path)
     os.makedirs(model_dir, exist_ok=True)
 
-    download_url = url
-    if api_key:
-        download_url = f"{url}?token={api_key}"
-
     cmd = [
         "aria2c",
         "--console-log-level=error",
@@ -42,10 +38,18 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
         "--retry-wait=10",
         "--connect-timeout=30",
         "--timeout=600",
-        download_url,
-        "-d",
-        model_dir,
+        "--auto-file-renaming=false",
     ]
+
+    if api_key:
+        cmd.extend(["--header", f"Authorization: Bearer {api_key}"])
+        # Also append token as query param as fallback for redirects
+        if "?" in url:
+            url = f"{url}&token={api_key}"
+        else:
+            url = f"{url}?token={api_key}"
+
+    cmd.extend([url, "-d", model_dir])
 
     try:
         # Use asyncio.create_subprocess_exec for non-blocking execution
