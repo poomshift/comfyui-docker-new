@@ -21,26 +21,17 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
     os.makedirs(model_dir, exist_ok=True)
 
     cmd = [
-        "aria2c",
-        "--console-log-level=error",
-        "-c",
-        "-x",
-        "1",
-        "-s",
-        "1",
-        "--file-allocation=none",
-        "--max-tries=5",
-        "--retry-wait=10",
-        "--connect-timeout=30",
-        "--timeout=600",
-        "--auto-file-renaming=false",
-        "--allow-overwrite=true",
+        "curl",
+        "-L",
+        "-J",
+        "-O",
+        "--output-dir", model_dir,
     ]
 
     if api_key:
-        cmd.extend(["--header", f"Authorization: Bearer {api_key}"])
+        cmd.extend(["-H", f"Authorization: Bearer {api_key}"])
 
-    cmd.extend([url, "-d", model_dir])
+    cmd.append(url)
 
     try:
         # Use asyncio.create_subprocess_exec for non-blocking execution
