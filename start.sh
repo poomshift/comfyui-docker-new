@@ -257,6 +257,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/MoonGoblinDev/Civicomfy.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh Civicomfy | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-RunpodDirect | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/evanspearman/ComfyMath.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyMath | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/richservo/rs-nodes.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh rs-nodes | tee -a /workspace/logs/comfyui.log
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log 
 
     # Install custom nodes requirements
