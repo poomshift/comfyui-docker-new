@@ -8,9 +8,7 @@
   "unet": [
   ],
   "diffusion_models": [
-    "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors",
-    "https://huggingface.co/SexGod1979/PinkCherry_MiniMax-H3/resolve/main/alpha-0.3-testing/PinkCherry_h3_fl2va_int8_convrot_v0.3-alpha.safetensors"
-  ],
+    "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_pruned_int8_convrot.safetensors"
   "text_encoders": [
     "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
   ],
