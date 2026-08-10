@@ -195,7 +195,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     # Install dependencies
     cd /workspace/ComfyUI
     echo "Installing PyTorch dependencies..." | tee -a /workspace/logs/comfyui.log
-    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu130 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
@@ -204,13 +204,10 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
 
     # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
     echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattention-2.2.0%2Bcu130-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 3 from prebuilt wheel (no compilation needed)
-    echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
+    # SageAttention 3 is intentionally skipped until a CUDA 13.0 Linux wheel is available.
     
     cd /workspace/ComfyUI
 
@@ -283,7 +280,7 @@ else
     # Install Dependencies
     cd /workspace/ComfyUI
     echo "Installing PyTorch dependencies..." | tee -a /workspace/logs/comfyui.log
-    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --extra-index-url https://download.pytorch.org/whl/cu128 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1 --index-url https://download.pytorch.org/whl/cu130 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "Installing ComfyUI requirements..." | tee -a /workspace/logs/comfyui.log
     uv pip install --no-cache -r requirements.txt 2>&1 | tee -a /workspace/logs/comfyui.log
 
@@ -292,13 +289,10 @@ else
 
     # Install SageAttention 2.2.0 from prebuilt wheel (no compilation needed)
     echo "Installing SageAttention 2.2.0 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    uv pip install https://huggingface.co/Kijai/PrecompiledWheels/resolve/main/sageattention-2.2.0-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
+    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattention-2.2.0%2Bcu130-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
     echo "SageAttention 2.2.0 installation complete" | tee -a /workspace/logs/comfyui.log
 
-    # Install SageAttention 3 from prebuilt wheel (no compilation needed)
-    echo "Installing SageAttention 3 from prebuilt wheel..." | tee -a /workspace/logs/comfyui.log
-    uv pip install https://huggingface.co/vjump21848/sageattention-pre-compiled-wheel/resolve/main/sageattn3-1.0.0%2Bcu128-cp312-cp312-linux_x86_64.whl 2>&1 | tee -a /workspace/logs/comfyui.log
-    echo "SageAttention 3 installation complete" | tee -a /workspace/logs/comfyui.log
+    # SageAttention 3 is intentionally skipped until a CUDA 13.0 Linux wheel is available.
 
     cd /workspace/ComfyUI
 
