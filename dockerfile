@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.8.0-base-ubuntu24.04
+FROM nvidia/cuda:13.0.3-base-ubuntu24.04
 ARG PYTHON_VERSION="3.12"
 ARG CONTAINER_TIMEZONE=UTC
 ENV DEBIAN_FRONTEND=noninteractive \
