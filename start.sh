@@ -256,8 +256,8 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/evanspearman/ComfyMath.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyMath | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/richservo/rs-nodes.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh rs-nodes | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/xmarre/ComfyUI-Spectrum-MiniMax-H3.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Spectrum-MiniMax-H3 | tee -a /workspace/logs/comfyui.log
-    git clone --depth=1 https://github.com/kijai/ComfyUI-SolAttn_triton.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-SolAttn_triton | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/thaakeno/ComfyUI-MiniMax-H3-Studio.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-MiniMax-H3-Studio | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh Comfyui_Minimax_h3_latent_Upscaler | tee -a /workspace/logs/comfyui.log
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log 
 
     # Install custom nodes requirements
