@@ -1,7 +1,7 @@
 {
   "checkpoints": [],
   "vae": [
-    "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors",
+    "https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors",
     "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors"
   ],
   "unet": [],
@@ -13,9 +13,7 @@
     "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
   ],
   "loras": [
-    "https://huggingface.co/Kijai/MiniMax-H3_comfy/resolve/main/loras/minimax_h3_fl2v_lightx2v_turbo_4step_v1.0_768p_resized_avg_rank_31_bf16.safetensors",
-    "https://huggingface.co/Patarapoom/H3_lora/resolve/main/HMNSFW_AIO_V2.safetensors",
-    "https://huggingface.co/Patarapoom/H3_lora/resolve/main/MysticXXX_MMH3-V1.safetensors",
+    "https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_4step_v1.1_768p_comfyui_bf16.safetensors",
     "https://huggingface.co/Patarapoom/H3_lora/resolve/main/VBVR_H3_attn_only.safetensors",
     "https://huggingface.co/Kijai/MiniMax-H3_comfy/resolve/main/loras/minimax_h3_ref2v_lightx2v_turbo_4step_v0.1_resized_avg_rank_20_bf16.safetensors",
     "https://huggingface.co/fal/MiniMax-H3-Realism-People-LoRA/resolve/main/h3-realism-people-t2v-i2v-r2v.safetensors"
