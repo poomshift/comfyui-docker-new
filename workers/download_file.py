@@ -3,6 +3,7 @@ import os
 import subprocess
 
 from constants.websocketEventManager import broadcast_to_websockets
+from utils.hfAuth import hf_auth_args, redact_token
 
 
 async def download_from_civitai_async(url, api_key=None, model_type="loras"):
@@ -72,7 +73,7 @@ async def download_from_civitai_async(url, api_key=None, model_type="loras"):
         return {"success": False, "message": f"Error during download: {str(e)}"}
 
 
-async def download_from_huggingface_async(url, model_type="loras"):
+async def download_from_huggingface_async(url, model_type="loras", api_key=None):
     """Download a model from Hugging Face using aria2c (async)"""
     # Handle model_type with or without 'models/' prefix
     if model_type.startswith("models/"):
@@ -89,8 +90,13 @@ async def download_from_huggingface_async(url, model_type="loras"):
 
     try:
         filename = url.split("/")[-1]
+
+        # Falls back to the HF_TOKEN environment variable when no key is posted
+        auth_args = hf_auth_args(url, api_key)
+
         cmd = [
             "aria2c",
+            *auth_args,
             "--console-log-level=error",
             "-c",
             "-x",
@@ -119,8 +125,8 @@ async def download_from_huggingface_async(url, model_type="loras"):
         )
         stdout, stderr = await process.communicate()
 
-        print(stdout.decode())
-        print(stderr.decode())
+        print(redact_token(stdout.decode(), api_key))
+        print(redact_token(stderr.decode(), api_key))
 
         if process.returncode == 0:
             await broadcast_to_websockets(
@@ -137,21 +143,31 @@ async def download_from_huggingface_async(url, model_type="loras"):
                     "data": {
                         "status": "failed",
                         "source": "huggingface",
-                        "detail": stdout.decode(),
+                        "detail": redact_token(stdout.decode(), api_key),
                     },
                 }
             )
-            return {"success": False, "message": f"Download failed: {stdout.decode()}"}
+            return {
+                "success": False,
+                "message": f"Download failed: {redact_token(stdout.decode(), api_key)}",
+            }
     except Exception as e:
 
         await broadcast_to_websockets(
             {
                 "type": "download",
-                "data": {"status": "failed", "source": "huggingface", "detail": str(e)},
+                "data": {
+                    "status": "failed",
+                    "source": "huggingface",
+                    "detail": redact_token(str(e), api_key),
+                },
             }
         )
 
-        return {"success": False, "message": f"Error during download: {str(e)}"}
+        return {
+            "success": False,
+            "message": f"Error during download: {redact_token(str(e), api_key)}",
+        }
 
 
 async def download_from_googledrive_async(

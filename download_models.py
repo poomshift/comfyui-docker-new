@@ -7,6 +7,12 @@ import logging
 import sys
 from typing import List, Dict, Any
 
+# Resolve imports against this file, since start.sh runs the script from an
+# arbitrary working directory.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from utils.hfAuth import hf_auth_args, redact_token
+
 # Prevent duplicate logging
 logging.getLogger().handlers = []
 
@@ -40,8 +46,14 @@ async def download_file(
         filename = url.split("/")[-1]
         logger.info(f"Starting download of {filename} from {url}")
 
+        # Only set for huggingface.co URLs, and only when a token is configured
+        auth_args = hf_auth_args(url)
+        if auth_args:
+            logger.info(f"Using Hugging Face token for {filename}")
+
         cmd = [
             "aria2c",
+            *auth_args,
             "--console-log-level=warn",  # Reduce verbosity to warnings only
             "-c",  # Continue downloading if partial file exists
             "-x",
@@ -79,11 +91,15 @@ async def download_file(
                 logger.info(f"Successfully downloaded {filename}")
                 return True
             else:
-                error_msg = stderr.decode("utf-8") if stderr else stdout.decode()
+                error_msg = redact_token(
+                    stderr.decode("utf-8") if stderr else stdout.decode()
+                )
                 logger.error(f"Failed to download {filename}: {error_msg}")
                 return False
         except Exception as e:
-            logger.error(f"Unexpected error while downloading {url}: {e}")
+            logger.error(
+                f"Unexpected error while downloading {url}: {redact_token(str(e))}"
+            )
             return False
 
 

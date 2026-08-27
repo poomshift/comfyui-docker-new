@@ -8,6 +8,7 @@ export SKIP_MODEL_DOWNLOAD=${SKIP_MODEL_DOWNLOAD:-"false"}
 export FORCE_MODEL_DOWNLOAD=${FORCE_MODEL_DOWNLOAD:-"false"}
 export LOG_PATH=${LOG_PATH:-"/notebooks/backend.log"}
 export USE_SAGE_ATTENTION=${USE_SAGE_ATTENTION:-"false"}
+export HF_TOKEN=${HF_TOKEN:-""}
 
 export TORCH_FORCE_WEIGHTS_ONLY_LOAD=1
 

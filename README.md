@@ -61,8 +61,28 @@ The interface consists of several key sections:
 
 1. Navigate to the Hugging Face downloader tab
 2. Enter the direct file URL from Hugging Face
-3. Select the appropriate model type
-4. Click "Download Model"
+3. Add an access token (optional - only needed for gated or private repos)
+4. Select the appropriate model type
+5. Click "Download Model"
+
+##### Gated and private repos
+
+Set the `HF_TOKEN` environment variable on your pod to download gated or
+private models. It is picked up by both the boot-time downloads driven by
+`models_config.json` and the Hugging Face downloader tab, so you only need to
+set it once. A token pasted into the downloader tab takes priority over the
+environment variable for that one download.
+
+Create a token at https://huggingface.co/settings/tokens with `read` access,
+and accept the model's license on its Hugging Face page first - a token alone
+does not grant access to a gated repo you have not been approved for.
+
+The token is only ever sent to `huggingface.co` URLs, never to Civitai, Google
+Drive, or any other host in your config, and it is stripped out of logs and the
+dashboard's error messages.
+
+Note that a token controls *access*, not bandwidth - it will not make public
+models download any faster.
 
 #### From Google Drive
 

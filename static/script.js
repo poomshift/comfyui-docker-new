@@ -317,6 +317,7 @@ async function downloadFromCivitai() {
 // download from huggingface website 
 async function downloadFromHuggingFace() {
   const url = document.getElementById("hfUrl").value;
+  const token = document.getElementById("hfToken").value;
   const modelType = document.getElementById("hfModelType").value;
   const statusDiv = document.getElementById("hfDownloadStatus");
 
@@ -326,7 +327,11 @@ async function downloadFromHuggingFace() {
     const response = await fetch("/download/huggingface", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: url, model_type: modelType }),
+      body: JSON.stringify({
+        url: url,
+        api_key: token,
+        model_type: modelType,
+      }),
     });
 
     if (response.status === 204) {

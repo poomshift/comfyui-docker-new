@@ -146,7 +146,9 @@ async def download(
     elif url_type == "huggingface":
 
         task = asyncio.create_task(
-            download_from_huggingface_async(request.url, request.model_type)
+            download_from_huggingface_async(
+                request.url, request.model_type, request.api_key
+            )
         )
     elif url_type == "googledrive":
 

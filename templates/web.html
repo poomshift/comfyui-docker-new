@@ -193,6 +193,13 @@
               placeholder="https://huggingface.co/[user]/[repo]/resolve/main/model.safetensors"
               required
             />
+            <label for="hfToken">Access Token (Optional)</label>
+            <input
+              type="password"
+              id="hfToken"
+              placeholder="Leave empty to use the HF_TOKEN environment variable"
+              class="input-box"
+            />
             <label for="hfModelType">Model Type</label>
             <select id="hfModelType">
               <option value="models/checkpoints">Checkpoints</option>
