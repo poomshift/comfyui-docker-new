@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from utils.hfAuth import hf_auth_args, redact_token
+from utils.hfDownload import download_via_hf, hf_client_enabled, parse_hf_url
 
 # Prevent duplicate logging
 logging.getLogger().handlers = []
@@ -38,69 +39,100 @@ logger.addHandler(stdout_handler)
 download_semaphore = asyncio.Semaphore(5)
 
 
+async def download_with_hf_client(url: str, output_path: Path, filename: str) -> bool:
+    """Fetch a Hugging Face file with the official client so Xet dedup applies.
+
+    Worth it because chunks shared with an already downloaded model are not
+    transferred again, which aria2c cannot do - it only speaks plain HTTP to
+    the LFS CDN. Also far fewer connections per file than aria2c, so it does
+    not run into the rate limiting that keeps the aria2c path at -x 4.
+    """
+    logger.info(f"Downloading {filename} via the Hugging Face client")
+
+    try:
+        await asyncio.to_thread(download_via_hf, url, str(output_path), filename)
+        logger.info(f"Successfully downloaded {filename} (hf client)")
+        return True
+    except Exception as e:
+        logger.warning(
+            f"Hugging Face client failed for {filename}: {redact_token(str(e))}"
+        )
+        return False
+
+
+async def download_with_aria2c(url: str, output_path: Path, filename: str) -> bool:
+    """Download a file using aria2c with optimized settings for faster downloads (async)"""
+    # Only set for huggingface.co URLs, and only when a token is configured
+    auth_args = hf_auth_args(url)
+    if auth_args:
+        logger.info(f"Using Hugging Face token for {filename}")
+
+    cmd = [
+        "aria2c",
+        *auth_args,
+        "--console-log-level=warn",  # Reduce verbosity to warnings only
+        "-c",  # Continue downloading if partial file exists
+        "-x",
+        "4",  # Increase concurrent connections to 4
+        "-s",
+        "4",  # Split file into 4 parts
+        "-k",
+        "1M",  # Minimum split size
+        "--file-allocation=none",  # Disable file allocation for faster start
+        "--optimize-concurrent-downloads=true",  # Optimize concurrent downloads
+        "--max-connection-per-server=16",  # Maximum connections per server
+        "--min-split-size=1M",  # Minimum split size
+        "--max-tries=5",  # Maximum retries
+        "--retry-wait=10",  # Wait between retries
+        "--connect-timeout=30",  # Connection timeout
+        "--timeout=600",  # Timeout for stalled downloads
+        "--summary-interval=30",  # Show summary every 30 seconds
+        url,
+        "-d",
+        str(output_path),
+        "-o",
+        filename,  # Specify output filename
+    ]
+
+    try:
+        logger.info(f"Running download command for {filename}")
+        # Use async subprocess for non-blocking execution
+        process = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            logger.info(f"Successfully downloaded {filename}")
+            return True
+        else:
+            error_msg = redact_token(
+                stderr.decode("utf-8") if stderr else stdout.decode()
+            )
+            logger.error(f"Failed to download {filename}: {error_msg}")
+            return False
+    except Exception as e:
+        logger.error(
+            f"Unexpected error while downloading {url}: {redact_token(str(e))}"
+        )
+        return False
+
+
 async def download_file(
     url: str, output_path: Path, semaphore: asyncio.Semaphore
 ) -> bool:
-    """Download a file using aria2c with optimized settings for faster downloads (async)"""
+    """Download one model, preferring the Hugging Face client where it applies"""
     async with semaphore:
         filename = url.split("/")[-1]
         logger.info(f"Starting download of {filename} from {url}")
 
-        # Only set for huggingface.co URLs, and only when a token is configured
-        auth_args = hf_auth_args(url)
-        if auth_args:
-            logger.info(f"Using Hugging Face token for {filename}")
-
-        cmd = [
-            "aria2c",
-            *auth_args,
-            "--console-log-level=warn",  # Reduce verbosity to warnings only
-            "-c",  # Continue downloading if partial file exists
-            "-x",
-            "4",  # Increase concurrent connections to 4
-            "-s",
-            "4",  # Split file into 4 parts
-            "-k",
-            "1M",  # Minimum split size
-            "--file-allocation=none",  # Disable file allocation for faster start
-            "--optimize-concurrent-downloads=true",  # Optimize concurrent downloads
-            "--max-connection-per-server=16",  # Maximum connections per server
-            "--min-split-size=1M",  # Minimum split size
-            "--max-tries=5",  # Maximum retries
-            "--retry-wait=10",  # Wait between retries
-            "--connect-timeout=30",  # Connection timeout
-            "--timeout=600",  # Timeout for stalled downloads
-            "--summary-interval=30",  # Show summary every 30 seconds
-            url,
-            "-d",
-            str(output_path),
-            "-o",
-            filename,  # Specify output filename
-        ]
-
-        try:
-            logger.info(f"Running download command for {filename}")
-            # Use async subprocess for non-blocking execution
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-
-            stdout, stderr = await process.communicate()
-
-            if process.returncode == 0:
-                logger.info(f"Successfully downloaded {filename}")
+        if hf_client_enabled() and parse_hf_url(url):
+            if await download_with_hf_client(url, output_path, filename):
                 return True
-            else:
-                error_msg = redact_token(
-                    stderr.decode("utf-8") if stderr else stdout.decode()
-                )
-                logger.error(f"Failed to download {filename}: {error_msg}")
-                return False
-        except Exception as e:
-            logger.error(
-                f"Unexpected error while downloading {url}: {redact_token(str(e))}"
-            )
-            return False
+            logger.info(f"Falling back to aria2c for {filename}")
+
+        return await download_with_aria2c(url, output_path, filename)
 
 
 async def get_config_async(config_path: str) -> Dict[str, Any]:

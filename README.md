@@ -92,6 +92,35 @@ models download any faster.
 4. Optionally specify a custom filename
 5. Click "Download Model"
 
+## ⚡ Download Backends
+
+Boot-time downloads pick a backend per URL:
+
+| URL | Backend | Why |
+| --- | --- | --- |
+| `huggingface.co/<repo>/resolve/...` | `huggingface_hub` | Uses Xet where the repo has it |
+| everything else | `aria2c` | Unchanged |
+
+Xet transfers content-defined chunks and reuses any it already holds. Two models
+that mostly overlap - different variants of the same base, say - cost the second
+one only its differing chunks instead of a second full download. aria2c talks to
+the plain LFS CDN and gets none of that. The client also opens far fewer
+connections per file, which matters because the aria2c path is held at `-x 4`
+to stay under Hugging Face's rate limiting.
+
+If the client fails for any reason the download falls back to aria2c, so an
+unavailable or non-Xet repo behaves exactly as before.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `USE_HF_XET` | `true` | Set `false` to send everything through aria2c |
+| `HF_HOME` | `/workspace/.cache/huggingface` | Keeps the chunk cache on the volume so it survives restarts |
+| `HF_XET_CHUNK_CACHE_SIZE_BYTES` | `34359738368` (32 GiB) | **The setting that decides whether dedup fires.** Chunks shared between two models are only reused while they are still cached, so this has to exceed the size they share. Lower it if disk is tight - dedup just stops helping |
+| `HF_XET_HIGH_PERFORMANCE` | `1` | Higher concurrency inside the client |
+
+`HF_TOKEN` applies here too, and gated repos need it just as they do on the
+aria2c path.
+
 ## 🌐 Running Outside RunPod
 
 On RunPod the dashboard builds its **Open ComfyUI** and **Open JupyterLab**

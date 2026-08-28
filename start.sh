@@ -12,6 +12,16 @@ export HF_TOKEN=${HF_TOKEN:-""}
 export COMFYUI_PUBLIC_URL=${COMFYUI_PUBLIC_URL:-""}
 export JUPYTER_PUBLIC_URL=${JUPYTER_PUBLIC_URL:-""}
 
+# Hugging Face client. HF_HOME lands on the persistent volume so the Xet chunk
+# cache survives restarts. That cache is what lets a model overlapping one
+# already downloaded skip the shared chunks, so it has to be big enough to hold
+# them - lower it if disk is tight and dedup simply stops helping.
+export USE_HF_XET=${USE_HF_XET:-"true"}
+export HF_HOME=${HF_HOME:-"/workspace/.cache/huggingface"}
+export HF_XET_CHUNK_CACHE_SIZE_BYTES=${HF_XET_CHUNK_CACHE_SIZE_BYTES:-34359738368}
+export HF_XET_HIGH_PERFORMANCE=${HF_XET_HIGH_PERFORMANCE:-"1"}
+export HF_HUB_DISABLE_PROGRESS_BARS=${HF_HUB_DISABLE_PROGRESS_BARS:-"1"}
+
 export TORCH_FORCE_WEIGHTS_ONLY_LOAD=1
 
 # Set strict error handling

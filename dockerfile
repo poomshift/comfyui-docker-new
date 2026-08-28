@@ -43,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pydantic \
     jinja2 \
     gdown \
+    "huggingface_hub[hf_xet]" \
     onnxruntime-gpu \
     pip \
     "numpy<2" \
