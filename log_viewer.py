@@ -164,6 +164,23 @@ async def download(
     background_tasks.add_task(lambda: task)
 
 
+def public_url_override(env_var):
+    """Read an explicit public URL from the environment, or None if unset.
+
+    Needed wherever the port the browser must use differs from the container
+    port, which is the case on hosts that map ports at random such as Vast.ai.
+    """
+    value = (os.getenv(env_var) or "").strip().rstrip("/")
+
+    if not value:
+        return None
+
+    if "://" not in value:
+        value = "http://" + value
+
+    return value
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """
@@ -202,7 +219,11 @@ async def index(request: Request):
         proxy_url = f"http://{proxy_host}:{proxy_port}"
         jupyter_url = f"http://{proxy_host}:{jupyter_port}"
 
-        # return template instead of html string
+    # An explicit URL wins over whatever was derived above, on any platform
+    proxy_url = public_url_override("COMFYUI_PUBLIC_URL") or proxy_url
+    jupyter_url = public_url_override("JUPYTER_PUBLIC_URL") or jupyter_url
+
+    # return template instead of html string
     return templates.TemplateResponse(
         request=request,
         name="web.html",

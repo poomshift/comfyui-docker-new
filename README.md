@@ -92,6 +92,27 @@ models download any faster.
 4. Optionally specify a custom filename
 5. Click "Download Model"
 
+## 🌐 Running Outside RunPod
+
+On RunPod the dashboard builds its **Open ComfyUI** and **Open JupyterLab**
+links from `RUNPOD_POD_ID`, and nothing needs configuring.
+
+Elsewhere it falls back to the hostname you reached the dashboard on plus the
+container ports, `8188` and `8888`. That is correct for local Docker and for an
+SSH tunnel, but wrong on hosts that publish containers on randomly assigned
+ports, such as Vast.ai - the dashboard has no way to learn which external port
+maps to `8188`.
+
+Set these when that is the case:
+
+| Variable | Example |
+| --- | --- |
+| `COMFYUI_PUBLIC_URL` | `http://63.12.4.9:40001` |
+| `JUPYTER_PUBLIC_URL` | `http://63.12.4.9:40002` |
+
+Either one may be set on its own; whichever is left unset keeps the default
+behaviour. A bare `host:port` is accepted and assumed to be `http://`.
+
 ## 🧩 Custom Nodes
 
 This template comes with the following custom nodes pre-installed:
