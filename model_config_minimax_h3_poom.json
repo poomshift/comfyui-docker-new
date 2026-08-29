@@ -13,7 +13,8 @@
     "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
   ],
   "loras": [
-    "https://huggingface.co/Kijai/MiniMax-H3_comfy/resolve/main/loras/minimax_h3_fl2v_lightx2v_turbo_4step_v1.0_768p_resized_avg_rank_31_bf16.safetensors",
+    "https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_4step_v1.1_768p_comfyui_bf16.safetensors",
+    "https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_8step_v1.0_768p_comfyui_bf16.safetensor",
     "https://huggingface.co/Patarapoom/H3_lora/resolve/main/HMNSFW_AIO_V2.safetensors",
     "https://huggingface.co/Patarapoom/H3_lora/resolve/main/MysticXXX_MMH3-V4.safetensors",
     "https://huggingface.co/Patarapoom/H3_lora/resolve/main/VBVR_H3_attn_only.safetensors",
