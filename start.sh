@@ -239,7 +239,6 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     #git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Impact-Pack | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/cubiq/ComfyUI_essentials.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_essentials | tee -a /workspace/logs/comfyui.log
     #git clone --depth=1 https://github.com/ltdrdata/ComfyUI-Inspire-Pack.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Inspire-Pack | tee -a /workspace/logs/comfyui.log
-    git clone --depth=1 https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git --recursive 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI_UltimateSDUpscale | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-VideoHelperSuite | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/Acly/comfyui-inpaint-nodes.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh comfyui-inpaint-nodes | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/kijai/ComfyUI-KJNodes.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-KJNodes | tee -a /workspace/logs/comfyui.log
@@ -258,7 +257,6 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/theUpsider/ComfyUI-Logic.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-Logic | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/ltdrdata/was-node-suite-comfyui.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh was-node-suite-comfyui | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/ClownsharkBatwing/RES4LYF.git  2>&1 | tee -a /workspace/logs/comfyui.log && du -sh RES4LYF | tee -a /workspace/logs/comfyui.log
-    git clone --depth=1 https://github.com/MoonGoblinDev/Civicomfy.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh Civicomfy | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/MadiatorLabs/ComfyUI-RunpodDirect.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-RunpodDirect | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/evanspearman/ComfyMath.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyMath | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/richservo/rs-nodes.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh rs-nodes | tee -a /workspace/logs/comfyui.log
@@ -266,6 +264,8 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     git clone --depth=1 https://github.com/thaakeno/ComfyUI-MiniMax-H3-Studio.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-MiniMax-H3-Studio | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh Comfyui_Minimax_h3_latent_Upscaler | tee -a /workspace/logs/comfyui.log
     git clone --depth=1 https://github.com/Adudeguyman/ComfyUI-H3-AudioRefine.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-H3-AudioRefine | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/Ltamann/ComfyUI-H3-Motion-Context-Auto-Chain-addon.git 2>&1 | tee -a /workspace/logs/comfyui.log && du -sh ComfyUI-H3-Motion-Context-Auto-Chain-addon | tee -a /workspace/logs/comfyui.log
+
     echo "Total size of custom nodes:" | tee -a /workspace/logs/comfyui.log && du -sh . | tee -a /workspace/logs/comfyui.log 
 
     # Install custom nodes requirements
