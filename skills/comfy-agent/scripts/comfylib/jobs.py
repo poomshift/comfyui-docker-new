@@ -225,6 +225,23 @@ def iter_output_files(outputs):
                     yield node_id, kind, item
 
 
+def safe_relpath(*parts):
+    """Join path parts into a safe relative Path, dropping empty/'.'/'..' components.
+
+    Guards against a server-supplied filename or subfolder escaping the output
+    directory via '..' segments or an absolute path.
+    """
+    pieces = []
+    for part in parts:
+        for chunk in re.split(r"[/\\]", part or ""):
+            if chunk in ("", ".", ".."):
+                continue
+            pieces.append(chunk)
+    if not pieces:
+        raise CliError("unsafe output filename", EXIT_JOB_ERROR, filename="/".join(p for p in parts if p))
+    return Path(*pieces)
+
+
 def fetch(client, prompt_id, out_root, extra_meta=None, submitted_at=None):
     st = get_status(client, prompt_id)
     if st["state"] != "done":
@@ -233,15 +250,28 @@ def fetch(client, prompt_id, out_root, extra_meta=None, submitted_at=None):
     stamp = (submitted_at or datetime.now()).strftime("%Y%m%d-%H%M%S")
     out_dir = Path(out_root) / f"{stamp}-{prompt_id[:8]}"
     files = []
-    for node_id, kind, item in iter_output_files(st["outputs"]):
-        subfolder = item.get("subfolder") or ""
-        dest = out_dir / subfolder / item["filename"] if subfolder else out_dir / item["filename"]
-        size = client.download("/view", {"filename": item["filename"], "subfolder": subfolder,
-                                         "type": item.get("type", "output")}, dest)
-        files.append({"node": f"#{node_id}", "kind": kind, "path": str(dest), "bytes": size})
-    manifest = {"prompt_id": prompt_id, "url": client.base_url,
-                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "out_dir": str(out_dir), "files": files, **(extra_meta or {})}
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-    return manifest
+
+    def write_manifest(partial=False, error=None):
+        manifest = {"prompt_id": prompt_id, "url": client.base_url,
+                    "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "out_dir": str(out_dir), "files": files, **(extra_meta or {})}
+        if partial:
+            manifest["partial"] = True
+            manifest["error"] = error
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+        return manifest
+
+    try:
+        for node_id, kind, item in iter_output_files(st["outputs"]):
+            subfolder = item.get("subfolder") or ""
+            dest = out_dir / safe_relpath(subfolder, item["filename"])
+            if not dest.resolve().is_relative_to(out_dir.resolve()):
+                raise CliError("unsafe output filename", EXIT_JOB_ERROR, filename=item["filename"])
+            size = client.download("/view", {"filename": item["filename"], "subfolder": subfolder,
+                                             "type": item.get("type", "output")}, dest)
+            files.append({"node": f"#{node_id}", "kind": kind, "path": str(dest), "bytes": size})
+    except Exception as exc:
+        write_manifest(partial=True, error=str(exc))
+        raise
+    return write_manifest()
