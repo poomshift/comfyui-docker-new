@@ -343,3 +343,11 @@ Normalize ทั้งสองฝั่ง: ตัด path prefix เก็บ�
 - SKILL.md และ references เขียนเป็นภาษาอังกฤษ เพราะ agent อ่านได้แม่นกว่า ส่วนเอกสารออกแบบนี้เป็นภาษาไทย
 - ไม่ทำ auth ในสโคปนี้ แต่ทุก request ผ่านจุดเดียวใน `api.py` เพื่อให้เพิ่ม Caddy basic auth ที่ image ทีหลังได้โดยแก้แค่ `COMFY_AUTH`
 - ชื่อ endpoint ของ official templates (`/templates/index.json`, `/api/workflow_templates`) ต้องยืนยันกับ ComfyUI เวอร์ชันที่ image ใช้ตอนเริ่มขั้นที่ 4
+
+## 16. ผลตรวจกับ ComfyUI จริง (2026-09-15, RunPod, ComfyUI 0.35.0, RTX 4090)
+
+Stage 1 ผ่าน `tests/smoke.sh` ครบ: doctor, models, run, wait, fetch, ledger ด้วย workflow `EmptyImage -> SaveImage`
+- `--set` coercion จาก `GET /object_info/{class}` ใช้ได้จริง; `/prompt` 400 ของจริงตอบ `{"error": {...}, "node_errors": {...}}` ตามที่ CLI คาด
+- `/view` รองรับ Range (206) การ resume ทำงานจริง
+- `GET /api/workflow_templates` คืน dict `{<custom_node_module>: [template_title, ...]}`
+- `GET /templates/index.json` คืน list ของหมวด `{moduleName, category, title, templates: [{name, title, description, mediaType, mediaSubtype, tutorialUrl, ...}]}` (11 หมวดบน 0.35.0) ไฟล์ template อยู่ที่ `/templates/<name>.json` — ใช้ shape นี้ตอนทำ stage 4
