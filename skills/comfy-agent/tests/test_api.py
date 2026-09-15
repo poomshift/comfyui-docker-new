@@ -53,6 +53,24 @@ def test_retries_on_503_then_succeeds(stub):
     assert len([r for r in stub.requests if r["path"] == "/system_stats"]) == 2
 
 
+def test_retry_closes_the_failed_response_before_retrying(stub, monkeypatch):
+    import urllib.error
+
+    stub.add("GET", "/system_stats", status=503)
+    stub.add("GET", "/system_stats", json_body={"system": {}})
+    closed = []
+    original_close = urllib.error.HTTPError.close
+
+    def tracking_close(self):
+        closed.append(self.code)
+        return original_close(self)
+
+    monkeypatch.setattr(urllib.error.HTTPError, "close", tracking_close)
+    client = api.Client(stub.url, retries=3, sleep=lambda s: None)
+    assert client.get_json("/system_stats") == {"system": {}}
+    assert closed == [503]
+
+
 def test_no_retry_on_400_and_body_is_parsed(stub):
     stub.add("POST", "/prompt", status=400, json_body={"error": {"message": "bad"}, "node_errors": {}})
     client = api.Client(stub.url, retries=3, sleep=lambda s: None)
@@ -61,6 +79,30 @@ def test_no_retry_on_400_and_body_is_parsed(stub):
     assert exc.value.status == 400
     assert exc.value.body["error"]["message"] == "bad"
     assert len(stub.requests) == 1
+
+
+def test_get_json_expect_rejects_wrong_type(stub):
+    stub.add("GET", "/system_stats", status=200, body=b"<html>not ready</html>")
+    client = api.Client(stub.url, retries=0)
+    with pytest.raises(api.ApiError) as exc:
+        client.get_json("/system_stats", expect=dict)
+    assert exc.value.status == 200
+    assert "dict" in str(exc.value)
+    assert exc.value.body == "<html>not ready</html>"
+
+
+def test_get_json_expect_accepts_matching_type(stub):
+    stub.add("GET", "/models", json_body=["checkpoints"])
+    client = api.Client(stub.url, retries=0)
+    assert client.get_json("/models", expect=list) == ["checkpoints"]
+
+
+def test_post_json_expect_rejects_wrong_type(stub):
+    stub.add("POST", "/prompt", status=200, body=b"not json")
+    client = api.Client(stub.url, retries=0)
+    with pytest.raises(api.ApiError) as exc:
+        client.post_json("/prompt", {}, expect=dict)
+    assert exc.value.status == 200
 
 
 def test_connect_error_after_retries():

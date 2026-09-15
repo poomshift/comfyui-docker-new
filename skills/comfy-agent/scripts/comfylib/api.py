@@ -67,6 +67,10 @@ def _parse_body(raw):
         return raw.decode("utf-8", "replace")
 
 
+def _preview(raw):
+    return raw.decode("utf-8", "replace")[:200]
+
+
 class Client:
     def __init__(self, base_url, auth=None, timeout=30.0, retries=3, sleep=time.sleep):
         self.base_url = normalize_url(base_url)
@@ -98,6 +102,7 @@ class Client:
                 return urllib.request.urlopen(req, timeout=timeout or self.timeout)
             except urllib.error.HTTPError as err:
                 if err.code in RETRY_STATUSES and attempt <= self.retries:
+                    err.close()
                     self.sleep(2 ** (attempt - 1))
                     continue
                 raw = err.read()
@@ -109,15 +114,29 @@ class Client:
                     continue
                 raise ConnectError(f"cannot reach {req.full_url}: {err}", url=req.full_url) from None
 
-    def get_json(self, path, query=None, timeout=None):
+    def get_json(self, path, query=None, timeout=None, expect=None):
         with self._open("GET", path, query=query, timeout=timeout) as resp:
-            return _parse_body(resp.read())
+            raw = resp.read()
+            status = resp.status
+        parsed = _parse_body(raw)
+        if expect is not None and not isinstance(parsed, expect):
+            raise ApiError(
+                f"{self.url(path, query)} did not return JSON {expect.__name__} (got {type(parsed).__name__})",
+                status=status, body=_preview(raw))
+        return parsed
 
-    def post_json(self, path, body=None, timeout=None):
+    def post_json(self, path, body=None, timeout=None, expect=None):
         data = json.dumps(body or {}).encode()
         with self._open("POST", path, body=data, timeout=timeout,
                         headers={"Content-Type": "application/json"}) as resp:
-            return _parse_body(resp.read())
+            raw = resp.read()
+            status = resp.status
+        parsed = _parse_body(raw)
+        if expect is not None and not isinstance(parsed, expect):
+            raise ApiError(
+                f"{self.url(path)} did not return JSON {expect.__name__} (got {type(parsed).__name__})",
+                status=status, body=_preview(raw))
+        return parsed
 
     def download(self, path, query, dest, resume=True):
         """Stream a file to dest. Resumes with a Range request when a partial file exists."""

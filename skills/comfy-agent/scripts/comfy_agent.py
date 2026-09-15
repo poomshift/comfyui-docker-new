@@ -9,6 +9,7 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -18,6 +19,17 @@ from comfylib.api import ApiError, Client, ConnectError, detect_runpod, derive_d
 from comfylib.output import (  # noqa: E402
     EXIT_CONNECT, EXIT_JOB_ERROR, EXIT_USAGE, CliError, emit, emit_error, print_banner,
 )
+
+
+class AgentArgumentParser(argparse.ArgumentParser):
+    """argparse.ArgumentParser whose parse-time errors are usage errors (exit 1),
+    not the exit-2 argparse default (which collides with "cannot connect").
+    --help / --version still call self.exit() directly, bypassing error(), so
+    their behaviour (print + SystemExit) is unchanged."""
+
+    def error(self, message):
+        raise CliError(message, EXIT_USAGE)
+
 
 COMMANDS = {}
 
@@ -34,8 +46,8 @@ def _gib(n):
 
 
 def build_parser():
-    p = argparse.ArgumentParser(prog="comfy-agent", description=__doc__,
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = AgentArgumentParser(prog="comfy-agent", description=__doc__,
+                            formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--version", action="version", version=f"comfy-agent {__version__}")
     p.add_argument("--url", default=os.environ.get("COMFY_URL"), help="ComfyUI base URL (env COMFY_URL)")
     p.add_argument("--auth", default=os.environ.get("COMFY_AUTH"),
@@ -49,8 +61,8 @@ def build_parser():
 @command("doctor")
 def cmd_doctor(args):
     client = make_client(args)
-    stats = client.get_json("/system_stats") or {}
-    classes = client.get_json("/object_info") or {}
+    stats = client.get_json("/system_stats", expect=dict) or {}
+    classes = client.get_json("/object_info", expect=dict) or {}
     pod = detect_runpod(client.base_url)
     dashboard = derive_dashboard_url(client.base_url)
     dashboard_ok = None
@@ -91,7 +103,7 @@ def _queue_items(items):
 @command("queue")
 def cmd_queue(args):
     client = make_client(args)
-    q = client.get_json("/queue") or {}
+    q = client.get_json("/queue", expect=dict) or {}
     data = {"ok": True, "running": _queue_items(q.get("queue_running", [])),
             "pending": _queue_items(q.get("queue_pending", []))}
     human = (f"running: {', '.join(i['prompt_id'] for i in data['running']) or '-'}\n"
@@ -119,9 +131,15 @@ def cmd_cancel(args):
 def cmd_models(args):
     client = make_client(args)
     if not args.folder:
-        folders = client.get_json("/models") or []
+        folders = client.get_json("/models", expect=list) or []
         return {"ok": True, "folders": folders}, 0, "\n".join(folders)
-    files = client.get_json(f"/models/{args.folder}") or []
+    try:
+        files = client.get_json(f"/models/{quote(args.folder, safe='')}", expect=list) or []
+    except ApiError as err:
+        if err.status == 404:
+            folders = client.get_json("/models", expect=list) or []
+            raise CliError(f"no model folder '{args.folder}'", EXIT_USAGE, folders=folders) from None
+        raise
     if args.grep:
         needle = args.grep.lower()
         files = [f for f in files if needle in f.lower()]
@@ -131,7 +149,7 @@ def cmd_models(args):
 @command("nodes")
 def cmd_nodes(args):
     client = make_client(args)
-    info = client.get_json("/object_info") or {}
+    info = client.get_json("/object_info", expect=dict) or {}
     rows = [{"name": name, "display_name": entry.get("display_name", name), "category": entry.get("category", "")}
             for name, entry in sorted(info.items())]
     if args.grep:
@@ -167,7 +185,7 @@ def class_info_fetcher(client):
     def fetch(class_type):
         if class_type not in cache:
             try:
-                info = client.get_json(f"/object_info/{class_type}") or {}
+                info = client.get_json(f"/object_info/{quote(class_type, safe='')}", expect=dict) or {}
             except ApiError as err:
                 if err.status != 404:
                     raise
@@ -314,9 +332,25 @@ def make_client(args):
     return Client(args.url, auth=args.auth)
 
 
+def _api_error_code(err):
+    """4xx (other than 401/403, which mean "cannot connect": bad/missing auth)
+    is a usage error, e.g. a typo'd model folder or class name -- not "cannot
+    connect". Everything else (network failures, 5xx, non-JSON bodies caught
+    by Client's expect= check) is treated as a connectivity problem."""
+    if isinstance(err.status, int) and 400 <= err.status < 500 and err.status not in (401, 403):
+        return EXIT_USAGE
+    return EXIT_CONNECT
+
+
 def main(argv=None):
+    argv = list(argv) if argv is not None else sys.argv[1:]
     parser = build_parser()
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except CliError as err:
+        json_mode = "--json" in argv
+        emit_error(err, json_mode)
+        return err.code
     if not args.cmd:
         print_banner(args.json)
         parser.print_help(sys.stderr)
@@ -335,7 +369,11 @@ def main(argv=None):
         emit_error(CliError(str(err), EXIT_CONNECT), args.json)
         return EXIT_CONNECT
     except ApiError as err:
-        emit_error(CliError(str(err), EXIT_CONNECT, status=err.status, body=err.body), args.json)
+        code = _api_error_code(err)
+        emit_error(CliError(str(err), code, status=err.status, body=err.body), args.json)
+        return code
+    except Exception as err:  # never let a command crash with a bare traceback
+        emit_error(CliError(f"unexpected error: {type(err).__name__}: {err}", EXIT_CONNECT), args.json)
         return EXIT_CONNECT
 
 

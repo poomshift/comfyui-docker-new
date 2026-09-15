@@ -1,5 +1,6 @@
 """Workflow loading, overrides, submission, status and the local run ledger."""
 import json
+import math
 import random
 import re
 import time
@@ -79,6 +80,8 @@ def coerce(raw, type_name, opts, address):
             value = raw
     except ValueError:
         raise CliError(f"{address}: expected {type_name}, got '{raw}'", EXIT_VALIDATE, address=address) from None
+    if type_name == "FLOAT" and not math.isfinite(value):
+        raise CliError(f"{address}: {value} is not a finite number", EXIT_VALIDATE, address=address)
     if type_name in ("INT", "FLOAT"):
         low, high = opts.get("min"), opts.get("max")
         if (low is not None and value < low) or (high is not None and value > high):
@@ -138,7 +141,7 @@ def node_errors_to_issues(body):
 
 def submit(client, workflow):
     try:
-        result = client.post_json("/prompt", {"prompt": workflow, "client_id": client.client_id})
+        result = client.post_json("/prompt", {"prompt": workflow, "client_id": client.client_id}, expect=dict)
     except ApiError as err:
         if err.status == 400:
             if isinstance(err.body, dict):
@@ -158,22 +161,35 @@ def _short_error(err):
             "traceback_tail": (err.get("traceback") or [])[-3:]}
 
 
+def _status_from_history_entry(prompt_id, entry):
+    status = entry.get("status") or {}
+    err = next((m[1] for m in status.get("messages", []) if m and m[0] == "execution_error"), None)
+    if status.get("status_str") == "error" or err:
+        return {"prompt_id": prompt_id, "state": "error", "error": _short_error(err)}
+    return {"prompt_id": prompt_id, "state": "done", "outputs": entry.get("outputs", {})}
+
+
+def _history_entry(client, prompt_id):
+    history = client.get_json(f"/history/{prompt_id}", expect=dict) or {}
+    return history.get(prompt_id)
+
+
 def get_status(client, prompt_id):
-    history = client.get_json(f"/history/{prompt_id}") or {}
-    entry = history.get(prompt_id)
+    entry = _history_entry(client, prompt_id)
     if entry:
-        status = entry.get("status") or {}
-        err = next((m[1] for m in status.get("messages", []) if m and m[0] == "execution_error"), None)
-        if status.get("status_str") == "error" or err:
-            return {"prompt_id": prompt_id, "state": "error", "error": _short_error(err)}
-        return {"prompt_id": prompt_id, "state": "done", "outputs": entry.get("outputs", {})}
-    queue = client.get_json("/queue") or {}
+        return _status_from_history_entry(prompt_id, entry)
+    queue = client.get_json("/queue", expect=dict) or {}
     for item in queue.get("queue_running", []):
         if len(item) > 1 and item[1] == prompt_id:
             return {"prompt_id": prompt_id, "state": "running"}
     for index, item in enumerate(queue.get("queue_pending", [])):
         if len(item) > 1 and item[1] == prompt_id:
             return {"prompt_id": prompt_id, "state": "queued", "position": index + 1}
+    # The job may have finished in the gap between the /history and /queue
+    # reads above; re-check /history once before declaring it unknown.
+    entry = _history_entry(client, prompt_id)
+    if entry:
+        return _status_from_history_entry(prompt_id, entry)
     return {"prompt_id": prompt_id, "state": "unknown"}
 
 

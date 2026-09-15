@@ -66,6 +66,15 @@ def test_coerce_types_and_ranges():
     assert exc.value.details["options"] == ["euler"]
 
 
+def test_coerce_rejects_non_finite_float():
+    with pytest.raises(CliError) as exc:
+        jobs.coerce("nan", "FLOAT", {}, "#3.denoise")
+    assert exc.value.code == 3
+    with pytest.raises(CliError) as exc:
+        jobs.coerce("inf", "FLOAT", {}, "#3.denoise")
+    assert exc.value.code == 3
+
+
 def test_apply_overrides(wf, object_info):
     applied = jobs.apply_overrides(wf, [("6", "text", "a dog"), ("3", "steps", "8")], object_info.get)
     assert wf["6"]["inputs"]["text"] == "a dog" and wf["3"]["inputs"]["steps"] == 8
@@ -138,6 +147,19 @@ def test_get_status_states(stub):
     assert jobs.get_status(client, "run")["state"] == "running"
     assert jobs.get_status(client, "pend") == {"prompt_id": "pend", "state": "queued", "position": 2}
     assert jobs.get_status(client, "gone")["state"] == "unknown"
+
+
+def test_get_status_rechecks_history_when_job_finishes_between_calls(stub):
+    from comfylib.api import Client
+    client = Client(stub.url, retries=0)
+    # first read: not in history yet; by the time /queue is checked it's gone from
+    # both queues (it finished in between) -- re-reading /history must now find it.
+    stub.add("GET", "/history/r", json_body={})
+    stub.add("GET", "/history/r", json_body={"r": {"outputs": {"9": {"images": []}},
+                                                    "status": {"status_str": "success", "completed": True, "messages": []}}})
+    stub.add("GET", "/queue", json_body={"queue_running": [], "queue_pending": []})
+    st = jobs.get_status(client, "r")
+    assert st["state"] == "done"
 
 
 def test_ledger_roundtrip(tmp_path):
