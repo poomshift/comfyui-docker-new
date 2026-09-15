@@ -44,3 +44,5 @@ ComfyUI/input/*
 # OS
 .DS_Store
 Thumbs.db 
+# superpowers scratch
+.superpowers/
