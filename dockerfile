@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && uv pip install --no-cache \
     jupyter \
     jupyterlab \
+    "tornado<6.5.9" \
     nodejs \
     requests \
     fastapi \
