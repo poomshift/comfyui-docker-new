@@ -7,14 +7,16 @@ Every command accepts --json for machine-readable output.
 import argparse
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from comfylib import __version__  # noqa: E402
+from comfylib import jobs  # noqa: E402
 from comfylib.api import ApiError, Client, ConnectError, detect_runpod, derive_dashboard_url  # noqa: E402
 from comfylib.output import (  # noqa: E402
-    EXIT_CONNECT, EXIT_USAGE, CliError, emit, emit_error, print_banner,
+    EXIT_CONNECT, EXIT_JOB_ERROR, EXIT_USAGE, CliError, emit, emit_error, print_banner,
 )
 
 COMMANDS = {}
@@ -88,9 +90,78 @@ def cmd_queue(args):
     return {"ok": True}, 0, "queue"
 
 
+def ledger():
+    root = Path(os.environ.get("COMFY_STATE", "~/.comfy-agent")).expanduser()
+    return jobs.Ledger(root / "runs.jsonl")
+
+
+def class_info_fetcher(client):
+    cache = {}
+
+    def fetch(class_type):
+        if class_type not in cache:
+            try:
+                info = client.get_json(f"/object_info/{class_type}") or {}
+            except ApiError as err:
+                if err.status != 404:
+                    raise
+                info = {}
+            cache[class_type] = info.get(class_type)
+        return cache[class_type]
+
+    return fetch
+
+
+def render_status(st):
+    if st["state"] == "queued":
+        return f"{st['prompt_id']}: queued (position {st.get('position')})"
+    if st["state"] == "error":
+        err = st.get("error") or {}
+        return (f"{st['prompt_id']}: FAILED in {err.get('node') or '?'} {err.get('class') or ''}\n"
+                f"{err.get('type') or ''}: {err.get('message') or 'no message'}")
+    if st["state"] == "done":
+        n = sum(len(v) for out in st.get("outputs", {}).values() for v in out.values() if isinstance(v, list))
+        return f"{st['prompt_id']}: done ({n} output entries)\nnext: comfy-agent fetch {st['prompt_id']}"
+    return f"{st['prompt_id']}: {st['state']}"
+
+
+def status_exit_code(st):
+    return EXIT_JOB_ERROR if st["state"] == "error" else 0
+
+
+@command("run")
+def cmd_run(args):
+    client = make_client(args)
+    workflow = jobs.load_workflow(args.workflow)
+    applied = jobs.apply_overrides(workflow, [jobs.parse_set(s) for s in args.set], class_info_fetcher(client))
+    seeds = jobs.randomize_seeds(workflow) if args.seed == "random" else {}
+    prompt_id = jobs.submit(client, workflow)
+    submitted = datetime.now()
+    record = {"prompt_id": prompt_id, "url": client.base_url, "workflow": str(Path(args.workflow).resolve()),
+              "overrides": applied, "seeds": seeds, "submitted_at": submitted.isoformat(timespec="seconds")}
+    ledger().append(record)
+    data = {"ok": True, **record, "state": "queued"}
+    human = f"submitted {prompt_id}\nnext: comfy-agent status {prompt_id}  (or: comfy-agent wait {prompt_id})"
+    return data, 0, human
+
+
+@command("status")
+def cmd_status(args):
+    client = make_client(args)
+    st = jobs.get_status(client, args.prompt_id)
+    return {"ok": st["state"] != "error", **st}, status_exit_code(st), render_status(st)
+
+
 def add_subcommands(sub):
     sub.add_parser("doctor", help="check connectivity, versions, GPU and environment limits")
     sub.add_parser("queue", help="show running and pending jobs")
+    run = sub.add_parser("run", help="submit an API-format workflow; returns prompt_id immediately")
+    run.add_argument("workflow", help="path to workflow JSON exported with Export (API)")
+    run.add_argument("--set", action="append", default=[], metavar="#ID.INPUT=VALUE",
+                     help="override a node input, e.g. --set '#6.text=a red fox' (repeatable)")
+    run.add_argument("--seed", choices=["random"], help="randomize every constant seed/noise_seed input")
+    status = sub.add_parser("status", help="queued / running / done / error for one prompt_id")
+    status.add_argument("prompt_id")
 
 
 def make_client(args):
