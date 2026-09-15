@@ -196,3 +196,52 @@ class Ledger:
 
     def find(self, prompt_id):
         return next((r for r in reversed(self.read()) if r.get("prompt_id") == prompt_id), None)
+
+
+TERMINAL_STATES = {"done", "error", "unknown"}
+
+
+def wait(client, prompt_id, timeout, interval, sleep=time.sleep, now=time.monotonic):
+    """Poll until the job reaches a terminal state or the deadline passes (then timed_out=True)."""
+    deadline = now() + timeout
+    while True:
+        st = get_status(client, prompt_id)
+        if st["state"] in TERMINAL_STATES:
+            return st
+        if now() >= deadline:
+            st["timed_out"] = True
+            return st
+        sleep(interval)
+
+
+def iter_output_files(outputs):
+    """Yield (node_id, kind, item) for every history output entry that names a file."""
+    for node_id, node_out in outputs.items():
+        for kind, items in node_out.items():
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if isinstance(item, dict) and item.get("filename"):
+                    yield node_id, kind, item
+
+
+def fetch(client, prompt_id, out_root, extra_meta=None, submitted_at=None):
+    st = get_status(client, prompt_id)
+    if st["state"] != "done":
+        code = EXIT_JOB_ERROR if st["state"] == "error" else EXIT_USAGE
+        raise CliError(f"job {prompt_id} is {st['state']}, nothing to fetch", code, status=st)
+    stamp = (submitted_at or datetime.now()).strftime("%Y%m%d-%H%M%S")
+    out_dir = Path(out_root) / f"{stamp}-{prompt_id[:8]}"
+    files = []
+    for node_id, kind, item in iter_output_files(st["outputs"]):
+        subfolder = item.get("subfolder") or ""
+        dest = out_dir / subfolder / item["filename"] if subfolder else out_dir / item["filename"]
+        size = client.download("/view", {"filename": item["filename"], "subfolder": subfolder,
+                                         "type": item.get("type", "output")}, dest)
+        files.append({"node": f"#{node_id}", "kind": kind, "path": str(dest), "bytes": size})
+    manifest = {"prompt_id": prompt_id, "url": client.base_url,
+                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "out_dir": str(out_dir), "files": files, **(extra_meta or {})}
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    return manifest

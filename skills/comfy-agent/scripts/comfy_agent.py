@@ -129,6 +129,48 @@ def status_exit_code(st):
     return EXIT_JOB_ERROR if st["state"] == "error" else 0
 
 
+def render_files(manifest):
+    lines = [f"saved {len(manifest['files'])} file(s) to {manifest['out_dir']}"]
+    lines += [f"  {f['path']}  ({f['bytes']} bytes)" for f in manifest["files"]]
+    return "\n".join(lines)
+
+
+def submitted_at_from_ledger(prompt_id):
+    record = ledger().find(prompt_id)
+    if record and record.get("submitted_at"):
+        try:
+            return datetime.fromisoformat(record["submitted_at"])
+        except ValueError:
+            return None
+    return None
+
+
+def finish_wait(st, args):
+    if st["state"] == "error":
+        return {"ok": False, **st}, EXIT_JOB_ERROR, render_status(st)
+    if st.get("timed_out"):
+        human = (f"{st['prompt_id']} still {st['state']} after {args.timeout:.0f}s\n"
+                 f"next: comfy-agent wait {st['prompt_id']}  (or status, then fetch when done)")
+        return {"ok": True, **st}, 0, human
+    return {"ok": True, **st}, 0, render_status(st)
+
+
+@command("wait")
+def cmd_wait(args):
+    client = make_client(args)
+    st = jobs.wait(client, args.prompt_id, args.timeout, args.interval)
+    return finish_wait(st, args)
+
+
+@command("fetch")
+def cmd_fetch(args):
+    client = make_client(args)
+    record = ledger().find(args.prompt_id) or {}
+    meta = {k: record[k] for k in ("workflow", "overrides", "seeds") if k in record}
+    manifest = jobs.fetch(client, args.prompt_id, Path(args.out), meta, submitted_at_from_ledger(args.prompt_id))
+    return {"ok": True, **manifest}, 0, render_files(manifest)
+
+
 @command("run")
 def cmd_run(args):
     client = make_client(args)
@@ -141,8 +183,20 @@ def cmd_run(args):
               "overrides": applied, "seeds": seeds, "submitted_at": submitted.isoformat(timespec="seconds")}
     ledger().append(record)
     data = {"ok": True, **record, "state": "queued"}
-    human = f"submitted {prompt_id}\nnext: comfy-agent status {prompt_id}  (or: comfy-agent wait {prompt_id})"
-    return data, 0, human
+    if not args.wait:
+        human = f"submitted {prompt_id}\nnext: comfy-agent status {prompt_id}  (or: comfy-agent wait {prompt_id})"
+        return data, 0, human
+    st = jobs.wait(client, prompt_id, args.timeout, args.interval)
+    if st["state"] == "done":
+        manifest = jobs.fetch(client, prompt_id, Path(args.out),
+                              {"workflow": record["workflow"], "overrides": applied, "seeds": seeds, "prompt": workflow},
+                              submitted)
+        data.update(st, files=manifest["files"], out_dir=manifest["out_dir"])
+        data.pop("outputs", None)
+        return data, 0, render_files(manifest)
+    result, code, human = finish_wait(st, args)
+    data.update(result)
+    return data, code, human
 
 
 @command("status")
@@ -160,8 +214,19 @@ def add_subcommands(sub):
     run.add_argument("--set", action="append", default=[], metavar="#ID.INPUT=VALUE",
                      help="override a node input, e.g. --set '#6.text=a red fox' (repeatable)")
     run.add_argument("--seed", choices=["random"], help="randomize every constant seed/noise_seed input")
+    run.add_argument("--wait", action="store_true", help="poll until done (max --timeout), then fetch into --out")
+    run.add_argument("--timeout", type=float, default=300, help="seconds to wait before returning (exit 0, still running)")
+    run.add_argument("--interval", type=float, default=3, help="poll interval seconds")
+    run.add_argument("--out", default=os.environ.get("COMFY_OUT", "./comfy-out"), help="output root (env COMFY_OUT)")
     status = sub.add_parser("status", help="queued / running / done / error for one prompt_id")
     status.add_argument("prompt_id")
+    wait = sub.add_parser("wait", help="poll a prompt_id until done or --timeout (exit 0 either way)")
+    wait.add_argument("prompt_id")
+    wait.add_argument("--timeout", type=float, default=300)
+    wait.add_argument("--interval", type=float, default=3)
+    fetch = sub.add_parser("fetch", help="download every output of a finished job + manifest.json")
+    fetch.add_argument("prompt_id")
+    fetch.add_argument("--out", default=os.environ.get("COMFY_OUT", "./comfy-out"), help="output root (env COMFY_OUT)")
 
 
 def make_client(args):
