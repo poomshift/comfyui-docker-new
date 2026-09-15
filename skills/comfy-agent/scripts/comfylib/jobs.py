@@ -140,9 +140,12 @@ def submit(client, workflow):
     try:
         result = client.post_json("/prompt", {"prompt": workflow, "client_id": client.client_id})
     except ApiError as err:
-        if err.status == 400 and isinstance(err.body, dict):
+        if err.status == 400:
+            if isinstance(err.body, dict):
+                raise CliError("ComfyUI rejected the workflow", EXIT_VALIDATE,
+                               issues=node_errors_to_issues(err.body)) from None
             raise CliError("ComfyUI rejected the workflow", EXIT_VALIDATE,
-                           issues=node_errors_to_issues(err.body)) from None
+                           issues=[], raw=err.body) from None
         raise
     return result["prompt_id"]
 

@@ -114,6 +114,14 @@ def test_submit_400_becomes_validation_error(stub, wf):
     assert node_issue["node"] == "#4" and node_issue["input"] == "ckpt_name"
 
 
+def test_submit_400_non_json_body_still_becomes_validation_error(stub, wf):
+    from comfylib.api import Client
+    stub.add("POST", "/prompt", status=400, body=b"Bad Request")
+    with pytest.raises(CliError) as exc:
+        jobs.submit(Client(stub.url, retries=0), wf)
+    assert exc.value.code == 3 and exc.value.details["issues"] == []
+
+
 def test_get_status_states(stub):
     from comfylib.api import Client
     client = Client(stub.url, retries=0)
@@ -166,6 +174,12 @@ def test_cli_run_validation_failure_exits_3(cli, stub, fixtures):
     stub.add("POST", "/prompt", status=400, json_body={"error": {"message": "bad"}, "node_errors": {}})
     code, out, _ = cli("--json", "run", str(fixtures / "wf_api_min.json"))
     assert code == 3 and json.loads(out)["issues"][0]["kind"] == "prompt"
+
+
+def test_cli_run_non_json_400_exits_3(cli, stub, fixtures):
+    stub.add("POST", "/prompt", status=400, body=b"Bad Request")
+    code, out, _ = cli("--json", "run", str(fixtures / "wf_api_min.json"))
+    assert code == 3 and json.loads(out)["issues"] == []
 
 
 def test_cli_status(cli, stub):
