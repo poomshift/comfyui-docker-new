@@ -46,3 +46,7 @@ ComfyUI/input/*
 Thumbs.db 
 # superpowers scratch
 .superpowers/
+comfy-out/
+.comfy-agent/
+__pycache__/
+.pytest_cache/
