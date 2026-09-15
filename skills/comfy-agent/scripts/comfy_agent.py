@@ -84,10 +84,76 @@ def cmd_doctor(args):
     return data, 0, "\n".join(lines)
 
 
+def _queue_items(items):
+    return [{"prompt_id": it[1], "number": it[0]} for it in items if len(it) > 1]
+
+
 @command("queue")
 def cmd_queue(args):
     client = make_client(args)
-    return {"ok": True}, 0, "queue"
+    q = client.get_json("/queue") or {}
+    data = {"ok": True, "running": _queue_items(q.get("queue_running", [])),
+            "pending": _queue_items(q.get("queue_pending", []))}
+    human = (f"running: {', '.join(i['prompt_id'] for i in data['running']) or '-'}\n"
+             f"pending: {', '.join(i['prompt_id'] for i in data['pending']) or '-'}")
+    return data, 0, human
+
+
+@command("cancel")
+def cmd_cancel(args):
+    client = make_client(args)
+    if args.all:
+        client.post_json("/queue", {"clear": True})
+        client.post_json("/interrupt")
+        return {"ok": True, "cancelled": "all", "interrupted": True}, 0, "cleared queue and interrupted current job"
+    st = jobs.get_status(client, args.prompt_id)
+    client.post_json("/queue", {"delete": [args.prompt_id]})
+    interrupted = st["state"] == "running"
+    if interrupted:
+        client.post_json("/interrupt")
+    data = {"ok": True, "cancelled": [args.prompt_id], "interrupted": interrupted, "was": st["state"]}
+    return data, 0, f"cancelled {args.prompt_id} (was {st['state']})"
+
+
+@command("models")
+def cmd_models(args):
+    client = make_client(args)
+    if not args.folder:
+        folders = client.get_json("/models") or []
+        return {"ok": True, "folders": folders}, 0, "\n".join(folders)
+    files = client.get_json(f"/models/{args.folder}") or []
+    if args.grep:
+        needle = args.grep.lower()
+        files = [f for f in files if needle in f.lower()]
+    return {"ok": True, "folder": args.folder, "files": files}, 0, "\n".join(files) or "(none)"
+
+
+@command("nodes")
+def cmd_nodes(args):
+    client = make_client(args)
+    info = client.get_json("/object_info") or {}
+    rows = [{"name": name, "display_name": entry.get("display_name", name), "category": entry.get("category", "")}
+            for name, entry in sorted(info.items())]
+    if args.grep:
+        needle = args.grep.lower()
+        rows = [r for r in rows if needle in r["name"].lower() or needle in r["display_name"].lower()
+                or needle in r["category"].lower()]
+    human = "\n".join(f"{r['name']}  ({r['display_name']})  [{r['category']}]" for r in rows) or "(none)"
+    return {"ok": True, "count": len(rows), "nodes": rows}, 0, human
+
+
+@command("free")
+def cmd_free(args):
+    client = make_client(args)
+    client.post_json("/free", {"unload_models": bool(args.unload_models), "free_memory": True})
+    return {"ok": True, "unload_models": bool(args.unload_models)}, 0, "asked ComfyUI to free memory"
+
+
+@command("ledger")
+def cmd_ledger(args):
+    runs = ledger().read(last=args.last)
+    human = "\n".join(f"{r.get('submitted_at', '?')}  {r.get('prompt_id')}  {r.get('workflow', '')}" for r in runs) or "(empty)"
+    return {"ok": True, "runs": runs}, 0, human
 
 
 def ledger():
@@ -209,6 +275,19 @@ def cmd_status(args):
 def add_subcommands(sub):
     sub.add_parser("doctor", help="check connectivity, versions, GPU and environment limits")
     sub.add_parser("queue", help="show running and pending jobs")
+    cancel = sub.add_parser("cancel", help="remove a job from the queue (interrupts it if running)")
+    group = cancel.add_mutually_exclusive_group(required=True)
+    group.add_argument("prompt_id", nargs="?")
+    group.add_argument("--all", action="store_true", help="clear the queue and interrupt the current job")
+    models = sub.add_parser("models", help="list model folders, or files in one folder")
+    models.add_argument("folder", nargs="?")
+    models.add_argument("--grep", help="case-insensitive substring filter")
+    nodes = sub.add_parser("nodes", help="list installed node classes")
+    nodes.add_argument("--grep", help="case-insensitive substring filter on name/display name/category")
+    free = sub.add_parser("free", help="release VRAM (optionally unload models)")
+    free.add_argument("--unload-models", action="store_true")
+    led = sub.add_parser("ledger", help="jobs submitted from this machine (no server needed)")
+    led.add_argument("--last", type=int, default=20)
     run = sub.add_parser("run", help="submit an API-format workflow; returns prompt_id immediately")
     run.add_argument("workflow", help="path to workflow JSON exported with Export (API)")
     run.add_argument("--set", action="append", default=[], metavar="#ID.INPUT=VALUE",
