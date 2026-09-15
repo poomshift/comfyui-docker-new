@@ -60,7 +60,7 @@ def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
     if not args.cmd:
-        print_banner(False)
+        print_banner(args.json)
         parser.print_help(sys.stderr)
         return EXIT_USAGE
     if args.cmd == "doctor":

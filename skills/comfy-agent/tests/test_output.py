@@ -1,4 +1,5 @@
 import json
+import sys
 
 import pytest
 
@@ -55,3 +56,15 @@ def test_main_requires_url(cli, monkeypatch):
     code, out, err = cli("--json", "queue")
     assert code == 2
     assert json.loads(out)["error"].startswith("COMFY_URL")
+
+
+def test_main_no_args_honours_json_for_banner(capsys, monkeypatch):
+    import comfy_agent
+    monkeypatch.delenv("COMFY_QUIET", raising=False)
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+
+    assert comfy_agent.main(["--json"]) == 1
+    assert "PromptAlchemist" not in capsys.readouterr().err
+
+    assert comfy_agent.main([]) == 1
+    assert "PromptAlchemist" in capsys.readouterr().err
