@@ -173,6 +173,19 @@ To back up your work:
 2. For workflows, save them through the ComfyUI interface
 
 
+## 🤖 AI agent access (comfy-agent skill)
+
+`skills/comfy-agent/` is an agent skill plus a dependency-free Python CLI that lets Claude Code,
+Codex, Cursor and similar agents run ComfyUI workflows on this pod or on a local ComfyUI.
+
+```bash
+cp -r skills/comfy-agent ~/.claude/skills/comfy-agent      # or ~/.agents/skills/ for other runtimes
+export COMFY_URL=https://<pod-id>-8188.proxy.runpod.net
+python3 ~/.claude/skills/comfy-agent/scripts/comfy_agent.py doctor
+```
+
+Workflows must be exported from ComfyUI with **Workflow > Export (API)**. See `skills/comfy-agent/SKILL.md`.
+
 ## 🙏 Acknowledgements
 
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by comfyanonymous

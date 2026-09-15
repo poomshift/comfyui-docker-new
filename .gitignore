@@ -44,3 +44,9 @@ ComfyUI/input/*
 # OS
 .DS_Store
 Thumbs.db 
+# superpowers scratch
+.superpowers/
+comfy-out/
+.comfy-agent/
+__pycache__/
+.pytest_cache/
