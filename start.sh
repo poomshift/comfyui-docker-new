@@ -203,7 +203,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     touch /workspace/logs/comfyui.log
 
     echo "Cloning ComfyUI..." | tee -a /workspace/logs/comfyui.log
-    git clone --depth=1 https://github.com/comfyanonymous/ComfyUI /workspace/ComfyUI 2>&1 | tee -a /workspace/logs/comfyui.log
+    git clone --depth=1 https://github.com/Comfy-Org/ComfyUI /workspace/ComfyUI 2>&1 | tee -a /workspace/logs/comfyui.log
 
     # Install dependencies
     cd /workspace/ComfyUI
