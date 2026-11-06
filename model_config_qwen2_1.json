@@ -1,0 +1,29 @@
+{
+  "checkpoints": [
+  ],
+  "vae": [
+    "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/blob/main/vae/qwen_image_2.1_vae_bf16.safetensors"
+  ],
+  "unet": [
+  ],
+  "diffusion_models": [
+    "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/blob/main/diffusion_models/qwen_image_2.1_int8_convrot.safetensors",
+  ],
+  "text_encoders": [
+    "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/blob/main/text_encoders/qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+    "https://huggingface.co/Comfy-Org/Qwen-Image-2.1/blob/main/text_encoders/qwen3vl_8b_int8_convrot.safetensors"
+  ],
+  "loras": [
+  ],
+  "upscale_models": [
+  ],
+  "controlnet": [
+  ],
+  "clip_vision": [
+  ],
+  "ipadapter": [
+  ],
+  "style_models": [
+  ],
+  "clip": []
+} 
