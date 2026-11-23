@@ -65,6 +65,20 @@ install_uv() {
     fi
 }
 
+# Custom node requirements are installed one file at a time, so nothing checks
+# that they agree with each other. rs-nodes caps transformers below 5, and
+# transformers 4.x needs huggingface-hub below 1.0. Nodes that only ask for
+# diffusers>=0.33 get the newest diffusers, and diffusers 0.40+ needs
+# huggingface-hub 1.x. That mix breaks `import diffusers`, which takes down
+# WanVideoWrapper, SeedVR2 and the MoMo model in Frame-Interpolation. So this
+# installs one consistent set last. diffusers 0.39.0 is the newest release that
+# still accepts huggingface-hub below 1.0. Drop this once no installed node caps
+# transformers below 5.
+reconcile_python_deps() {
+    echo "Reconciling diffusers/transformers versions..." | tee -a /workspace/logs/comfyui.log
+    uv pip install --no-cache "diffusers==0.39.0" "transformers>=4.57.0,<5" 2>&1 | tee -a /workspace/logs/comfyui.log
+}
+
 # Ensure CUDA environment is properly set
 export CUDA_VISIBLE_DEVICES=0
 export PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512
@@ -271,6 +285,7 @@ if [ ! -e "/workspace/ComfyUI/main.py" ]; then
     # Install custom nodes requirements
     echo "Installing custom node requirements..." | tee -a /workspace/logs/comfyui.log
     find . -name "requirements.txt" -exec uv pip install --no-cache -r {} \; 2>&1 | tee -a /workspace/logs/comfyui.log
+    reconcile_python_deps
 
     mkdir -p /workspace/ComfyUI/user/default/ComfyUI-Manager
     wget https://gist.githubusercontent.com/vjumpkung/b2993de3524b786673552f7de7490b08/raw/b7ae0b4fe0dad5c930ee290f600202f5a6c70fa8/uv_enabled_config.ini -O /workspace/ComfyUI/user/default/ComfyUI-Manager/config.ini 2>&1 | tee -a /workspace/logs/comfyui.log
@@ -309,6 +324,7 @@ else
     cd /workspace/ComfyUI/custom_nodes
     echo "Installing custom node requirements..." | tee -a /workspace/logs/comfyui.log
     find . -name "requirements.txt" -exec uv pip install --no-cache -r {} \; 2>&1 | tee -a /workspace/logs/comfyui.log
+    reconcile_python_deps
 fi
 
 # Create log file if it doesn't exist
