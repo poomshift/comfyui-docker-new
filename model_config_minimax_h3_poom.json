@@ -6,7 +6,7 @@
   ],
   "unet": [],
   "diffusion_models": [
-    "https://huggingface.co/TenStrip/10Eros-Max/resolve/main/10Eros_Max_8stepTurbo_v1.0_hybrid-int8_HQ.safetensors"
+    "https://huggingface.co/OliviaRossi/Minimax-h3_Singularity-x-10Eros-Max_PRISM/resolve/main/10Eros_Max_SingularityV2_PRISM2_PikaFlex_0.85_int8HQ.safetensors"
   ],
   "text_encoders": [
     "https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors"
